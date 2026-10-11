@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Binary Search for LeetCode — SDE Interview Study Guide</title>
+<style>
+:root{color-scheme:light;--ink:#182230;--muted:#526174;--line:#d9e1ea;--panel:#f5f8fc;--accent:#2459a9;--code:#101827}
+*{box-sizing:border-box}body{margin:0;background:#eef2f7;color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;background:#fff;padding:clamp(22px,5vw,60px);box-shadow:0 8px 35px #1d2a3a12}
+h1,h2,h3{line-height:1.25;letter-spacing:-.02em}h1{font-size:clamp(2rem,5vw,3rem);margin:.25em 0}h2{margin-top:2.1em;border-bottom:1px solid var(--line);padding-bottom:.4em}h3{margin-top:1.5em}p,li{max-width:78ch} .eyebrow{color:var(--accent);font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:.78rem}
+.lead{font-size:1.15rem;color:var(--muted)}.meta{color:var(--muted);font-size:.9rem}
+.callout{padding:16px 20px;border-left:4px solid var(--accent);background:var(--panel);border-radius:6px;margin:20px 0}
+figure{margin:24px auto;text-align:center}figure svg{width:min(100%,620px);height:auto}figcaption{font-size:.9rem;color:var(--muted);margin-top:8px}
+pre{overflow:auto;background:var(--code);color:#f3f6fb;padding:18px;border-radius:10px;line-height:1.55;font-size:.91rem}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}p code,li code,td code{background:#eef2f7;color:#24354b;padding:.1em .32em;border-radius:4px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.94rem}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--panel)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:10px;padding:16px}.card h3{margin-top:0}
+.small{font-size:.92rem;color:var(--muted)}.pill{display:inline-block;border:1px solid var(--line);padding:3px 9px;border-radius:999px;font-size:.8rem;margin:3px}
+details{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0}summary{cursor:pointer;font-weight:700}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
+@media print{body{background:white}main{box-shadow:none;max-width:none;padding:0}.card,pre,figure,table{break-inside:avoid}details{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<p class="eyebrow">Interview preparation · Python · LeetCode</p>
+<h1>Binary Search: From Sorted Arrays to Search-on-Answer</h1>
+<p class="lead">A practical, NeetCode-inspired study guide for SDE mid-level interviews. Binary search is not about sorted arrays — it's about <em>monotonicity</em>. Master the templates here and you unlock a whole family of problems that never mention sorting at all.</p>
+<p class="meta">Includes embedded diagrams, Python examples, complexity analysis, a study roadmap with direct LeetCode links, and your first practice problem. This file is self-contained and works offline. Companion guide: <a href="binary_search_trees_leetcode_study.html">Binary Search Trees</a> (binary search made into a data structure).</p>
+
+<h2>1. What is binary search?</h2>
+<p><strong>Binary search</strong> finds an answer in a search space by repeatedly asking a yes/no question about the <em>middle</em> and discarding half the space. On a sorted array, the question is &quot;is the middle element before or after my target?&quot; — and each probe eliminates half of what remains, giving <code>O(log n)</code> probes instead of <code>O(n)</code>.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 190" role="img" aria-label="Searching for 23 in sorted array 2 5 8 12 16 23 38 56 72: middle 16 is less than 23 so the left half is discarded">
+<g font-family="system-ui,sans-serif" font-size="18" text-anchor="middle" dominant-baseline="middle">
+<g fill="#eef2f7" stroke="#c3cfdb" stroke-width="1.5"><rect x="60" y="50" width="60" height="44" rx="7"/><rect x="120" y="50" width="60" height="44" rx="7"/><rect x="180" y="50" width="60" height="44" rx="7"/><rect x="240" y="50" width="60" height="44" rx="7"/><rect x="300" y="50" width="60" height="44" rx="7"/></g>
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><rect x="360" y="50" width="60" height="44" rx="7"/><rect x="420" y="50" width="60" height="44" rx="7"/><rect x="480" y="50" width="60" height="44" rx="7"/><rect x="540" y="50" width="60" height="44" rx="7"/></g>
+<g fill="#a9b6c4"><text x="90" y="72">2</text><text x="150" y="72">5</text><text x="210" y="72">8</text><text x="270" y="72">12</text><text x="330" y="72">16</text></g>
+<g fill="#182230"><text x="390" y="72">23</text><text x="450" y="72">38</text><text x="510" y="72">56</text><text x="570" y="72">72</text></g>
+<g fill="#526174" font-size="14"><text x="180" y="120">discard: everything &lt; 16</text><text x="450" y="120">keep: answer is in here</text></g>
+<g fill="#2459a9" font-size="14"><text x="330" y="28">mid = 16 &lt; 23 → go right</text></g>
+</g>
+<g stroke="#2459a9" stroke-width="2.5" fill="none"><path d="M330 34 L330 44"/></g>
+</svg><figcaption>Searching for <code>23</code> in <code>[2, 5, 8, 12, 16, 23, 38, 56, 72]</code>. The middle element 16 is less than 23, so the target can only be to the right — five elements are gone in one comparison. Nine elements need at most 4 probes, a million need 20.</figcaption>
+</figure>
+<ul>
+<li><strong>The precondition that actually matters:</strong> <em>monotonicity</em>. If some property is false, false, …, false, true, true, … — binary search finds the boundary. &quot;Sorted array&quot; is just the most common instance (the property: &quot;element ≤ target&quot;).</li>
+<li><strong>The loop invariant:</strong> the answer, if it exists, is always inside <code>[lo, hi]</code>. Every iteration must preserve this — and make progress — by discarding half.</li>
+<li><strong>Logarithmic cost:</strong> <code>log₂(1,000,000) ≈ 20</code>. This is why &quot;can I binary-search it?&quot; is the first question to ask on any large search space.</li>
+<li><strong>Bug-proneness is the catch:</strong> off-by-one errors, infinite loops on two-element ranges, and wrong boundary handling. The cure is choosing <em>one</em> template and understanding its invariant (Section 5, Pattern 1).</li>
+</ul>
+
+<h2>2. Binary search in Python (and <code>bisect</code>)</h2>
+<pre><code>def binary_search(nums, target):       # LeetCode 704
+    lo, hi = 0, len(nums) - 1
+    while lo &lt;= hi:
+        mid = (lo + hi) // 2
+        if nums[mid] == target:
+            return mid
+        elif nums[mid] &lt; target:
+            lo = mid + 1               # discard mid and everything left
+        else:
+            hi = mid - 1               # discard mid and everything right
+    return -1</code></pre>
+<p>Notes that matter in interviews:</p>
+<ul>
+<li><code>mid = (lo + hi) // 2</code> is safe in Python (arbitrary-precision ints). In C/Java you'd write <code>lo + (hi - lo) // 2</code> to avoid overflow — worth mentioning as a known detail.</li>
+<li>The loop runs while the range is <em>non-empty</em> (<code>lo &lt;= hi</code>) and discards <code>mid</code> itself each time — that pairing is what guarantees termination. Mixing conventions from different templates is the classic infinite-loop bug.</li>
+</ul>
+<p>For boundary searches, the standard library has done the tricky part since 3.x — and interviewers accept it unless they explicitly want the manual version:</p>
+<pre><code>from bisect import bisect_left, bisect_right, insort
+
+nums = [1, 3, 3, 3, 7]
+bisect_left(nums, 3)     # 1 — leftmost position where 3 could be inserted
+bisect_right(nums, 3)    # 4 — just past the rightmost 3
+bisect_left(nums, 4)     # 4 — first element greater than 4 (ceiling)
+
+# count of 3s = bisect_right - bisect_left; "does 3 exist" = nums[bisect_left] == 3
+insort(nums, 5)          # O(n) insert (shift) at the O(log n) found position</code></pre>
+
+<h2>3. Binary search vs. the rest of the series</h2>
+<div class="grid">
+<div class="card"><h3>Linear scan</h3><p><code>O(n)</code>, no preconditions. Fine for small n; the thing to beat.</p><p class="small"><strong>Useful for:</strong> unsorted data when sorting isn't free.</p></div>
+<div class="card"><h3>Balanced BST</h3><p>Binary search <em>as a data structure</em> — <code>O(log n)</code> search <em>plus</em> O(log n) insert/delete while staying searchable.</p><p class="small"><strong>Useful for:</strong> dynamic sorted data. See the <a href="binary_search_trees_leetcode_study.html">BST guide</a>.</p></div>
+<div class="card"><h3>Heap</h3><p><code>O(1)</code> peek at one extreme — but finding an arbitrary value is <code>O(n)</code>. Binary search needs the order a heap hides.</p><p class="small"><strong>Useful for:</strong> when only the extreme matters. See the <a href="heaps_priority_queues_leetcode_study.html">Heaps guide</a>.</p></div>
+</div>
+<table><thead><tr><th>Structure</th><th>Search</th><th>Insert</th><th>Needs sorted order?</th></tr></thead><tbody>
+<tr><td>Sorted array + binary search</td><td><code>O(log n)</code></td><td><code>O(n)</code></td><td>Yes — that's the whole precondition</td></tr>
+<tr><td>Unsorted array</td><td><code>O(n)</code></td><td><code>O(1)</code></td><td>—</td></tr>
+<tr><td>Balanced BST</td><td><code>O(log n)</code></td><td><code>O(log n)</code></td><td>Maintains it automatically</td></tr>
+<tr><td>Hash map</td><td><code>O(1)</code> exact-match only</td><td><code>O(1)</code></td><td>No — and no ordering queries at all</td></tr>
+</tbody></table>
+<p>Same guidance as the BST guide, sharpened: hash maps answer &quot;is x present?&quot;; binary search answers &quot;where is the <em>boundary</em>?&quot; — first element ≥ x, last element ≤ x, how many are below x, the smallest feasible capacity. A hash map cannot answer boundary questions without scanning.</p>
+
+<h2>4. When should you use binary search?</h2>
+<table><thead><tr><th>Signal in the prompt</th><th>What's monotonic</th><th>Typical problem</th></tr></thead><tbody>
+<tr><td>&quot;Sorted array, find x / position of x&quot;</td><td>Element value vs. index</td><td><a href="https://leetcode.com/problems/binary-search/">704</a>, <a href="https://leetcode.com/problems/search-insert-position/">35</a></td></tr>
+<tr><td>&quot;First / last position where…&quot;</td><td>Prefix property (false…false true…true)</td><td><a href="https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/">34</a>, <a href="https://leetcode.com/problems/first-bad-version/">278</a></td></tr>
+<tr><td>Sorted but rotated / peaky structure</td><td>Locally sorted half identifiable</td><td><a href="https://leetcode.com/problems/search-in-rotated-sorted-array/">33</a>, <a href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/">153</a>, <a href="https://leetcode.com/problems/find-peak-element/">162</a></td></tr>
+<tr><td>&quot;Minimize the maximum / minimize capacity / speed / days&quot;</td><td>Feasibility vs. the answer value (Pattern 3)</td><td><a href="https://leetcode.com/problems/koko-eating-bananas/">875</a>, <a href="https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/">1011</a>, <a href="https://leetcode.com/problems/split-array-largest-sum/">410</a></td></tr>
+<tr><td>Matrix sorted in rows and columns</td><td>Treat as one sorted array (or stair-step)</td><td><a href="https://leetcode.com/problems/search-a-2d-matrix/">74</a></td></tr>
+<tr><td>Timestamped lookups / floor queries</td><td>Time</td><td><a href="https://leetcode.com/problems/time-based-key-value-store/">981</a></td></tr>
+</tbody></table>
+<div class="callout"><strong>The universal test:</strong> can you write a predicate <code>feasible(x)</code> that, once true, stays true for all larger (or smaller) x? Then binary search over x finds the boundary in <code>O(log(range) × cost of predicate)</code>. If you can't name the monotonic property, slow down — you're probably not looking at a binary search problem.</div>
+
+<h2>5. Four core interview patterns</h2>
+<h3>Pattern 1 — The boundary template (leftmost true)</h3>
+<p>Most real problems aren't &quot;find exact value&quot; but &quot;find the first index where a condition holds&quot;. One template covers them all — including exact-match and insertion-position problems:</p>
+<pre><code>def leftmost(nums, target):            # first index with nums[i] >= target
+    lo, hi = 0, len(nums)              # hi is EXCLUSIVE: search space [lo, hi)
+    while lo &lt; hi:
+        mid = (lo + hi) // 2
+        if nums[mid] &lt; target:
+            lo = mid + 1               # mid is too small — and so is everything left
+        else:
+            hi = mid                   # mid qualifies — but an earlier one may exist
+    return lo                          # lo == hi == first qualifying index
+
+# first index with nums[i] > target  →  same loop with  nums[mid] <= target</code></pre>
+<div class="callout"><strong>Why this template kills off-by-one bugs:</strong> the search space is half-open <code>[lo, hi)</code> and <code>hi</code> starts at <code>len(nums)</code> — a legal answer even if every element qualifies. The loop ends when <code>lo == hi</code>, so there is exactly one exit state, and <code>lo</code> is the boundary. Never re-derive this in an interview; write the invariant, then trust it: &quot;everything left of <code>lo</code> is false, everything from <code>hi</code> on is true.&quot;</div>
+<p>Common problems: <a href="https://leetcode.com/problems/search-insert-position/">35 Search Insert Position</a>, <a href="https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/">34 First and Last Position</a> (run it twice), <a href="https://leetcode.com/problems/first-bad-version/">278 First Bad Version</a> (the predicate is an API call).</p>
+
+<h3>Pattern 2 — Sorted-but-mangled arrays (rotated, peaks)</h3>
+<p>Rotation and peaks break global sortedness but keep a <em>local</em> sorted half, which is enough to decide which side to discard:</p>
+<pre><code>def search_rotated(nums, target):      # LeetCode 33
+    lo, hi = 0, len(nums) - 1
+    while lo &lt;= hi:
+        mid = (lo + hi) // 2
+        if nums[mid] == target:
+            return mid
+        if nums[lo] &lt;= nums[mid]:      # LEFT half [lo..mid] is sorted —
+            if nums[lo] &lt;= target &lt; nums[mid]:
+                hi = mid - 1           # target in the sorted half
+            else:
+                lo = mid + 1
+        else:                          # RIGHT half [mid..hi] is sorted
+            if nums[mid] &lt; target &lt;= nums[hi]:
+                lo = mid + 1
+            else:
+                hi = mid - 1
+    return -1</code></pre>
+<p>The discipline: at each step, <em>identify which half is sorted</em>, then check whether the target lies inside that half's value range. Variants: minimum of a rotated array (<a href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/">153</a> — compare <code>nums[mid]</code> to <code>nums[hi]</code>), peak finding (<a href="https://leetcode.com/problems/find-peak-element/">162</a> — walk toward the higher neighbor), 2-D matrix (<a href="https://leetcode.com/problems/search-a-2d-matrix/">74</a> — binary search over <code>m·n</code> treated as one array, or two searches).</p>
+
+<h3>Pattern 3 — Binary search on the answer (the big unlock)</h3>
+<p>The search space doesn't have to be an array at all. If the <em>answer itself</em> is a number whose feasibility is monotonic, binary search over candidate answers:</p>
+<pre><code>def min_eating_speed(piles, h):        # LeetCode 875: Koko Eating Bananas
+    def hours_needed(speed):
+        return sum((pile + speed - 1) // speed for pile in piles)
+
+    lo, hi = 1, max(piles)
+    while lo &lt; hi:                     # search space: possible speeds
+        mid = (lo + hi) // 2
+        if hours_needed(mid) &lt;= h:     # feasible — maybe a slower speed works
+            hi = mid
+        else:                          # too slow — need a bigger speed
+            lo = mid + 1
+    return lo</code></pre>
+<p>Why it works: if Koko can finish at speed <code>s</code>, she can finish at any speed above <code>s</code> — feasibility is monotonic in the answer. So the answer space looks like <code>false false … false true … true</code>, and the loop above finds its left edge. <strong>Cost:</strong> <code>O(n · log(max(piles)))</code> — log of the <em>value range</em>, times one linear scan per probe.</p>
+<table><thead><tr><th>Problem</th><th>Binary-searched quantity</th><th>Predicate</th></tr></thead><tbody>
+<tr><td><a href="https://leetcode.com/problems/koko-eating-bananas/">875 Koko Eating Bananas</a></td><td>eating speed</td><td>can finish within h hours</td></tr>
+<tr><td><a href="https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/">1011 Capacity To Ship Packages</a></td><td>ship capacity</td><td>can ship within D days (greedy check)</td></tr>
+<tr><td><a href="https://leetcode.com/problems/split-array-largest-sum/">410 Split Array Largest Sum</a></td><td>max subarray sum allowed</td><td>can split into ≤ k pieces (greedy check)</td></tr>
+<tr><td><a href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/">153 Min in Rotated Array</a></td><td>— (array index)</td><td>element is left of the rotation point</td></tr>
+</tbody></table>
+<div class="callout"><strong>Recognizing it in the wild:</strong> &quot;minimize the maximum…&quot;, &quot;minimum capacity/speed/strength to…&quot;, &quot;least number of days such that…&quot;. The phrase <em>minimize the maximum</em> (or <em>maximize the minimum</em>) is the strongest binary-search-on-answer signal in interviewing. The feasibility check is usually a greedy linear scan — monotonic stacks and interval logic from the <a href="stacks_leetcode_study.html">Stacks guide</a> sometimes show up inside it.</div>
+
+<h3>Pattern 4 — <code>bisect</code> as a building block</h3>
+<p>Design problems often reduce to &quot;keep a sorted log and query boundaries&quot;. <a href="https://leetcode.com/problems/time-based-key-value-store/">981 Time Based Key-Value Store</a>: per key, keep parallel lists of timestamps and values (timestamps are naturally increasing); <code>get</code> is <code>bisect_right</code> minus one:</p>
+<pre><code>import bisect
+
+class TimeMap:
+    def __init__(self):
+        self.times = {}     # key -> [timestamps, increasing]
+        self.vals = {}      # key -> [values, aligned with times]
+
+    def set(self, key: str, value: str, timestamp: int) -&gt; None:
+        self.times.setdefault(key, []).append(timestamp)
+        self.vals.setdefault(key, []).append(value)
+
+    def get(self, key: str, timestamp: int) -&gt; str:
+        i = bisect.bisect_right(self.times.get(key, []), timestamp)
+        return self.vals[key][i - 1] if i else &quot;&quot;</code></pre>
+<p>The habit: when a problem says &quot;largest timestamp ≤ t&quot; or &quot;how many elements ≤ t&quot;, translate directly to <code>bisect_right</code>/<code>bisect_left</code> arithmetic instead of hand-rolling a loop. The cost is <code>O(log n)</code> per query, <code>O(1)</code> amortized per insert-at-end.</p>
+
+<h2>6. Study roadmap</h2>
+<table><thead><tr><th>Stage</th><th>Focus</th><th>Representative LeetCode problems</th></tr></thead><tbody>
+<tr><td>1. Foundations</td><td>The classic loop, mid arithmetic</td><td><a href="https://leetcode.com/problems/binary-search/">704 Binary Search</a>; <a href="https://leetcode.com/problems/search-insert-position/">35 Search Insert Position</a>; <a href="https://leetcode.com/problems/first-bad-version/">278 First Bad Version</a></td></tr>
+<tr><td>2. Boundaries</td><td>Leftmost/rightmost template</td><td><a href="https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/">34 First and Last Position</a>; <a href="https://leetcode.com/problems/guess-number-higher-or-lower/">374 Guess Number</a>; <a href="https://leetcode.com/problems/sqrtx/">69 Sqrt(x)</a></td></tr>
+<tr><td>3. Mangled arrays</td><td>Rotated, peaks, 2-D</td><td><a href="https://leetcode.com/problems/search-in-rotated-sorted-array/">33 Rotated Array</a>; <a href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/">153 Find Minimum</a>; <a href="https://leetcode.com/problems/search-a-2d-matrix/">74 2-D Matrix</a></td></tr>
+<tr><td>4. Search on answer</td><td>Monotonic feasibility, greedy checks</td><td><a href="https://leetcode.com/problems/koko-eating-bananas/">875 Koko</a>; <a href="https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/">1011 Ship Packages</a></td></tr>
+<tr><td>5. bisect fluency</td><td>Library building blocks</td><td><a href="https://leetcode.com/problems/time-based-key-value-store/">981 Time-Based KV Store</a>; <a href="https://leetcode.com/problems/find-right-interval/">436 Right Interval</a></td></tr>
+<tr><td>6. Hard</td><td>Search-on-answer with hard checks</td><td><a href="https://leetcode.com/problems/split-array-largest-sum/">410 Split Array Largest Sum</a>; <a href="https://leetcode.com/problems/median-of-two-sorted-arrays/">4 Median of Two Sorted Arrays</a>; <a href="https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/">378 Kth in Sorted Matrix</a></td></tr>
+</tbody></table>
+
+<h2>7. Interview checklist</h2>
+<ol>
+<li><strong>Monotonicity:</strong> What exactly is false-then-true (or increasing)? Can I state the predicate in one sentence?</li>
+<li><strong>Template:</strong> Half-open <code>[lo, hi)</code> with <code>hi = mid</code>, or closed <code>[lo, hi]</code> with <code>mid ± 1</code>? Pick one and don't mix.</li>
+<li><strong>Termination:</strong> Does every path strictly shrink the search space? (The <code>lo = mid</code> without <code>+1</code> mistake is the classic infinite loop.)</li>
+<li><strong>Half-open discipline:</strong> <code>hi</code> exclusive means initial <code>hi = len(nums)</code> and exit when <code>lo == hi</code>.</li>
+<li><strong>Return value:</strong> Is the answer <code>lo</code>, <code>lo − 1</code>, or <code>−1</code> when nothing qualifies? Test on an empty and a single-element input.</li>
+<li><strong>Duplicates:</strong> Does the caller want any match, the first, or the last? That dictates the comparison.</li>
+<li><strong>Search-on-answer:</strong> What's the value range? Is <code>feasible(max)</code> guaranteed true (so an answer exists)?</li>
+<li><strong>Complexity:</strong> <code>O(log n)</code> per probe — or <code>O(n log(max_value))</code> for search-on-answer. Can I state the cost of one predicate call?</li>
+</ol>
+
+<h2>8. First practice problem — LeetCode 704</h2>
+<p><strong><a href="https://leetcode.com/problems/binary-search/">Binary Search</a></strong></p>
+<p>Given a sorted array <code>nums</code> and an integer <code>target</code>, return the index of <code>target</code>, or <code>−1</code> if absent. The algorithm must run in <code>O(log n)</code>.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 210" role="img" aria-label="Search space halves each probe: 16 elements, then 8, then 4, then 2, then 1">
+<g font-family="system-ui,sans-serif" font-size="16" text-anchor="middle" dominant-baseline="middle">
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><rect x="60" y="30" width="500" height="34" rx="7"/></g>
+<g fill="#182230"><text x="310" y="47">16 elements → probe the middle → 8 remain</text></g>
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><rect x="140" y="84" width="340" height="34" rx="7"/></g>
+<g fill="#182230"><text x="310" y="101">8 elements → probe the middle → 4 remain</text></g>
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><rect x="220" y="138" width="180" height="34" rx="7"/></g>
+<g fill="#182230"><text x="310" y="155">4 → 2 → 1</text></g>
+<g fill="#526174" font-size="14"><text x="310" y="196">log₂(16) = 4 probes · log₂(1,000,000) ≈ 20 probes</text></g>
+</g>
+</svg><figcaption>Each probe discards half the remaining space. The interesting half of this figure is what it implies: any search space that shrinks by half per yes/no question — an array, a value range, a tree path — is <code>O(log n)</code> territory.</figcaption>
+</figure>
+<p>Start with the classic closed-interval loop from Section 2. Once it works, the real exercise is re-deriving it with the leftmost-boundary template and confirming both give the same answers on every case you can think of.</p>
+<div class="callout"><strong>Trace these three cases before declaring victory:</strong> target smaller than everything, target larger than everything, and target present exactly once. Boundary bugs live in exactly those three places.</div>
+<pre><code>class Solution:
+    def search(self, nums: list[int], target: int) -&gt; int:
+        # Your code here
+        pass</code></pre>
+<details><summary>Reveal the solution after trying it yourself</summary>
+<pre><code>class Solution:
+    def search(self, nums: list[int], target: int) -&gt; int:
+        lo, hi = 0, len(nums) - 1
+        while lo &lt;= hi:
+            mid = (lo + hi) // 2
+            if nums[mid] == target:
+                return mid
+            elif nums[mid] &lt; target:
+                lo = mid + 1
+            else:
+                hi = mid - 1
+        return -1</code></pre>
+<p><strong>Time:</strong> <code>O(log n)</code> — the range halves every iteration. <strong>Space:</strong> <code>O(1)</code>.</p>
+<p><strong>Follow-up the interviewer will ask:</strong> what if the array has duplicates and you want the <em>first</em> occurrence? Switch to the leftmost-boundary template from Pattern 1 — <code>hi = mid</code> instead of <code>mid − 1</code>, and no early return. This is exactly the transition from exact-match thinking to boundary thinking, and making it fluently is the point of this guide.</p>
+</details>
+<h3>Practice prompts</h3>
+<ol>
+<li>Why does the loop condition <code>lo &lt;= hi</code> pair with <code>hi = mid − 1</code>, while <code>lo &lt; hi</code> pairs with <code>hi = mid</code> — what breaks if you swap them?</li>
+<li>How many probes would you need for an array of one billion elements — and why is that answer the whole reason binary search exists?</li>
+<li>For <a href="https://leetcode.com/problems/koko-eating-bananas/">Koko Eating Bananas</a>, state the predicate and argue in two sentences why it's monotonic.</li>
+</ol>
+<p>Try writing the solution from memory, then explain the invariant, the discard rule, and the complexity aloud as you would in an interview.</p>
+
+<footer><p><strong>Suggested workflow:</strong> solve each problem yourself first, explain your approach aloud, then compare with a clean solution. Focus on recognizing the pattern rather than memorizing code. Next in the series: <a href="binary_search_trees_leetcode_study.html">Binary Search Trees</a> · <a href="index.html">Back to the index</a>.</p></footer>
+</main></body></html>
+
+
+
+

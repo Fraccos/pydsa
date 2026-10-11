@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Binary Trees for LeetCode — SDE Interview Study Guide</title>
+<style>
+:root{color-scheme:light;--ink:#182230;--muted:#526174;--line:#d9e1ea;--panel:#f5f8fc;--accent:#2459a9;--code:#101827}
+*{box-sizing:border-box}body{margin:0;background:#eef2f7;color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;background:#fff;padding:clamp(22px,5vw,60px);box-shadow:0 8px 35px #1d2a3a12}
+h1,h2,h3{line-height:1.25;letter-spacing:-.02em}h1{font-size:clamp(2rem,5vw,3rem);margin:.25em 0}h2{margin-top:2.1em;border-bottom:1px solid var(--line);padding-bottom:.4em}h3{margin-top:1.5em}p,li{max-width:78ch} .eyebrow{color:var(--accent);font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:.78rem}
+.lead{font-size:1.15rem;color:var(--muted)}.meta{color:var(--muted);font-size:.9rem}
+.callout{padding:16px 20px;border-left:4px solid var(--accent);background:var(--panel);border-radius:6px;margin:20px 0}
+figure{margin:24px auto;text-align:center}figure svg{width:min(100%,620px);height:auto}figcaption{font-size:.9rem;color:var(--muted);margin-top:8px}
+pre{overflow:auto;background:var(--code);color:#f3f6fb;padding:18px;border-radius:10px;line-height:1.55;font-size:.91rem}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}p code,li code,td code{background:#eef2f7;color:#24354b;padding:.1em .32em;border-radius:4px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.94rem}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--panel)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:10px;padding:16px}.card h3{margin-top:0}
+.small{font-size:.92rem;color:var(--muted)}.pill{display:inline-block;border:1px solid var(--line);padding:3px 9px;border-radius:999px;font-size:.8rem;margin:3px}
+details{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0}summary{cursor:pointer;font-weight:700}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
+@media print{body{background:white}main{box-shadow:none;max-width:none;padding:0}.card,pre,figure,table{break-inside:avoid}details{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<p class="eyebrow">Interview preparation · Python · LeetCode</p>
+<h1>Binary Trees: From Fundamentals to Medium &amp; Hard</h1>
+<p class="lead">A practical, NeetCode-inspired study guide for SDE mid-level interviews. Learn the data structure, understand when to use it, and build toward the recurring patterns behind tree problems.</p>
+<p class="meta">Includes embedded diagrams, Python examples, complexity analysis, a study roadmap, and your first practice problem. This file is self-contained and works offline.</p>
+
+<h2>1. What is a binary tree?</h2>
+<p>A <strong>binary tree</strong> is a hierarchical data structure in which each node has at most two children: a <code>left</code> child and a <code>right</code> child. Each node stores a value and references to its children.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" role="img" aria-label="Binary tree with root 1, children 2 and 3, and leaves 4, 5 and 6">
+<g stroke="#8ca0b8" stroke-width="3" fill="none"><path d="M300 54 L180 116 M300 54 L420 116 M180 146 L120 208 M180 146 L240 208 M420 146 L480 208"/></g>
+<g font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle"><g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><circle cx="300" cy="38" r="25"/><circle cx="180" cy="130" r="25"/><circle cx="420" cy="130" r="25"/><circle cx="120" cy="230" r="25"/><circle cx="240" cy="230" r="25"/><circle cx="480" cy="230" r="25"/></g><g fill="#182230"><text x="300" y="38">1</text><text x="180" y="130">2</text><text x="420" y="130">3</text><text x="120" y="230">4</text><text x="240" y="230">5</text><text x="480" y="230">6</text></g></g>
+</svg><figcaption>Each node has at most two children. Node 1 is the root; nodes 4, 5, and 6 are leaves.</figcaption>
+</figure>
+<ul>
+<li><strong>Root:</strong> the topmost node, here <code>1</code>.</li>
+<li><strong>Parent / child:</strong> a direct connection from a node to one below it.</li>
+<li><strong>Leaf:</strong> a node with no children.</li>
+<li><strong>Subtree:</strong> a node and all its descendants.</li>
+<li><strong>Depth:</strong> number of edges from the root to a node; root depth is 0.</li>
+<li><strong>Height:</strong> number of edges on the longest path from a node to a leaf. A leaf has height 0 under this convention.</li>
+</ul>
+<p>Some definitions count height in nodes rather than edges. Either is fine if consistent. LeetCode's “maximum depth” is usually described as the number of nodes on the longest root-to-leaf path.</p>
+
+<h2>2. Representing a tree in Python</h2>
+<p>LeetCode generally gives you a <code>TreeNode</code> class and passes the root to your function.</p>
+<pre><code>class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right</code></pre>
+<p>Build a tree manually:</p>
+<pre><code>root = TreeNode(1)
+root.left = TreeNode(2)
+root.right = TreeNode(3)
+root.left.left = TreeNode(4)
+root.left.right = TreeNode(5)
+root.right.right = TreeNode(6)</code></pre>
+<p>Access nodes through references:</p>
+<pre><code>root.left.val        # 2
+root.right.val       # 3
+root.left.right.val  # 5
+root.left.left.left  # None</code></pre>
+<p>LeetCode may display the tree as <code>[1, 2, 3, 4, 5, null, 6]</code>. This is a serialization format, not necessarily the representation you manipulate in your solution. Your function usually receives the root node directly.</p>
+
+<h2>3. Binary tree vs. BST vs. heap</h2>
+<div class="grid">
+<div class="card"><h3>Binary tree</h3><p>No value-ordering rule. Each node has at most two children.</p><p class="small"><strong>Useful for:</strong> hierarchies, paths, recursion, subtree DP, ancestor problems.</p></div>
+<div class="card"><h3>Binary Search Tree (BST)</h3><p>Values in the left subtree are smaller and values in the right subtree are larger, assuming the conventional no-duplicates rule.</p><p class="small"><strong>Useful for:</strong> ordered search, min/max, predecessor/successor, kth-smallest, LCA in a BST.</p></div>
+<div class="card"><h3>Binary heap</h3><p>A complete binary tree with parent-child ordering. In a min-heap, each parent is no greater than its children.</p><p class="small"><strong>Useful for:</strong> priority queues, scheduling, top-k problems, graph algorithms.</p></div>
+</div>
+<p>A BST can search in <code>O(log n)</code> time when balanced, but may degrade to <code>O(n)</code> when skewed. A heap gives <code>O(1)</code> access to its minimum but typically needs <code>O(n)</code> to search for an arbitrary value. Python's <code>heapq</code> provides a min-heap.</p>
+<table><thead><tr><th>Property</th><th>Binary tree</th><th>BST</th><th>Binary heap</th></tr></thead><tbody>
+<tr><td>At most two children</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Values ordered</td><td>No rule</td><td>Global subtree ordering</td><td>Parent-child ordering</td></tr>
+<tr><td>Must be complete</td><td>No</td><td>No</td><td>Yes</td></tr>
+<tr><td>Arbitrary value search</td><td><code>O(n)</code></td><td><code>O(log n)</code> if balanced</td><td><code>O(n)</code></td></tr>
+<tr><td>Typical use</td><td>Hierarchy and recursion</td><td>Ordered operations</td><td>Priority queue</td></tr>
+</tbody></table>
+
+<h2>4. When should you use a tree?</h2>
+<p>Choose a tree when the data is naturally hierarchical, or when a problem can be broken into smaller left and right subproblems. A tree is not automatically faster than an array or hash map.</p>
+<table><thead><tr><th>Structure</th><th>Strength</th><th>Typical weakness</th></tr></thead><tbody>
+<tr><td>Array</td><td><code>O(1)</code> indexed access</td><td>Middle insertions may shift elements</td></tr>
+<tr><td>Hash map</td><td><code>O(1)</code> average key lookup</td><td>Does not naturally model hierarchy</td></tr>
+<tr><td>Linked list</td><td>Insert/delete efficiently when node is known</td><td><code>O(n)</code> positional access</td></tr>
+<tr><td>Binary tree</td><td>Hierarchy, recursive decomposition, paths</td><td>Arbitrary search can be <code>O(n)</code></td></tr>
+<tr><td>Balanced BST</td><td>Ordered operations in <code>O(log n)</code></td><td>Needs balancing guarantees</td></tr>
+<tr><td>Heap</td><td>Fast access to highest-priority item</td><td>No efficient arbitrary-value search</td></tr>
+</tbody></table>
+
+<h2>5. Recursion: the foundation</h2>
+<p>Consider counting the nodes in a tree. The count for a node is one (the node itself), plus the count of its left subtree, plus the count of its right subtree.</p>
+<div class="callout"><strong>Recursive definition</strong><br><code>count(root) = 1 + count(root.left) + count(root.right)</code><br><code>count(None) = 0</code> — this is the base case.</div>
+<pre><code>class Solution:
+    def countNodes(self, root: Optional[TreeNode]) -> int:
+        if root is None:
+            return 0
+
+        left_count = self.countNodes(root.left)
+        right_count = self.countNodes(root.right)
+        return 1 + left_count + right_count</code></pre>
+<p><strong>Time:</strong> <code>O(n)</code>, because every node is visited once. <strong>Auxiliary space:</strong> <code>O(h)</code> for the recursion stack, where <code>h</code> is tree height — <code>O(log n)</code> for a balanced tree and <code>O(n)</code> for a skewed tree.</p>
+<p>The recursive function only needs the root of the subtree it is processing. This makes it reusable at every level.</p>
+
+<h2>6. Four core interview patterns</h2>
+<h3>Pattern 1 — DFS (Depth-First Search)</h3>
+<p>DFS explores a branch before moving to another. The three classic orders differ in when the current node is processed:</p>
+<div class="grid">
+<div class="card"><h3>Preorder</h3><p><strong>Root → Left → Right</strong></p><code>[1, 2, 4, 5, 3]</code></div>
+<div class="card"><h3>Inorder</h3><p><strong>Left → Root → Right</strong></p><code>[4, 2, 5, 1, 3]</code></div>
+<div class="card"><h3>Postorder</h3><p><strong>Left → Right → Root</strong></p><code>[4, 5, 2, 3, 1]</code></div>
+</div>
+<p>Common problems: <a href="https://leetcode.com/problems/maximum-depth-of-binary-tree/">Maximum Depth (104)</a>, <a href="https://leetcode.com/problems/diameter-of-binary-tree/">Diameter (543)</a>, <a href="https://leetcode.com/problems/balanced-binary-tree/">Balanced Tree (110)</a>, <a href="https://leetcode.com/problems/invert-binary-tree/">Invert Tree (226)</a>, <a href="https://leetcode.com/problems/path-sum/">Path Sum (112)</a>, <a href="https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/">LCA (236)</a>, and <a href="https://leetcode.com/problems/binary-tree-maximum-path-sum/">Maximum Path Sum (124)</a>.</p>
+<p><strong>Key question:</strong> What information should the recursive function return to its parent? Height, validity, or best downward path are common answers.</p>
+
+<h3>Pattern 2 — BFS (Breadth-First Search)</h3>
+<p>BFS explores level by level. If a prompt mentions levels, the nearest qualifying node, or level-by-level output, consider BFS first.</p>
+<pre><code>from collections import deque
+
+def levelOrder(root):
+    if root is None:
+        return []
+
+    result = []
+    queue = deque([root])
+
+    while queue:
+        level = []
+        for _ in range(len(queue)):
+            node = queue.popleft()
+            level.append(node.val)
+
+            if node.left:
+                queue.append(node.left)
+            if node.right:
+                queue.append(node.right)
+
+        result.append(level)
+
+    return result</code></pre>
+<p><strong>Time:</strong> <code>O(n)</code>. <strong>Space:</strong> <code>O(n)</code> worst case for the queue and result. Common problems: <a href="https://leetcode.com/problems/binary-tree-level-order-traversal/">102 Level Order Traversal</a>, <a href="https://leetcode.com/problems/binary-tree-right-side-view/">199 Right Side View</a>, <a href="https://leetcode.com/problems/binary-tree-zigzag-level-order-traversal/">103 Zigzag Traversal</a>, and minimum depth.</p>
+
+<h3>Pattern 3 — BST properties</h3>
+<p>An inorder traversal of a valid BST visits values in sorted order. This can unlock kth-smallest, validation, and successor problems. For validation, remember that every node must respect the constraints of its entire subtree — checking only its immediate children is insufficient.</p>
+
+<h3>Pattern 4 — Tree DP and global state</h3>
+<p>Some problems need two kinds of information: a value returned upward to the parent, and a best answer tracked anywhere in the tree.</p>
+<p>For the diameter, a candidate path through a node combines the heights of its left and right subtrees. If heights count edges, the candidate is <code>left_height + right_height + 2</code>. If heights count nodes, it is <code>left_height + right_height</code> when empty subtrees have height zero.</p>
+<div class="callout"><strong>Tree DP insight:</strong> the value returned to the parent may be different from the global answer being optimized. Maximum path sum (124) is a classic example.</div>
+
+<h2>7. Study roadmap</h2>
+<table><thead><tr><th>Stage</th><th>Focus</th><th>Representative LeetCode problems</th></tr></thead><tbody>
+<tr><td>1. Foundations</td><td>TreeNode, recursion, DFS/BFS</td><td><a href="https://leetcode.com/problems/maximum-depth-of-binary-tree/">104 Maximum Depth</a>; <a href="https://leetcode.com/problems/same-tree/">100 Same Tree</a>; <a href="https://leetcode.com/problems/invert-binary-tree/">226 Invert Tree</a></td></tr>
+<tr><td>2. Core DFS</td><td>Subtree returns, base cases</td><td><a href="https://leetcode.com/problems/diameter-of-binary-tree/">543 Diameter</a>; <a href="https://leetcode.com/problems/balanced-binary-tree/">110 Balanced Tree</a>; <a href="https://leetcode.com/problems/path-sum/">112 Path Sum</a></td></tr>
+<tr><td>3. BFS</td><td>Queues and levels</td><td><a href="https://leetcode.com/problems/binary-tree-level-order-traversal/">102 Level Order</a>; <a href="https://leetcode.com/problems/binary-tree-right-side-view/">199 Right Side View</a>; <a href="https://leetcode.com/problems/binary-tree-zigzag-level-order-traversal/">103 Zigzag</a></td></tr>
+<tr><td>4. BSTs</td><td>Ordering, inorder, pruning</td><td><a href="https://leetcode.com/problems/validate-binary-search-tree/">98 Validate BST</a>; <a href="https://leetcode.com/problems/kth-smallest-element-in-a-bst/">230 Kth Smallest</a>; <a href="https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/">235 LCA of BST</a></td></tr>
+<tr><td>5. Construction</td><td>Traversal arrays and indexes</td><td><a href="https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/">105 Preorder + Inorder</a>; <a href="https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal/">106 Inorder + Postorder</a></td></tr>
+<tr><td>6. Advanced DFS</td><td>Global state, paths, subtrees</td><td><a href="https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/">236 LCA of Binary Tree</a>; <a href="https://leetcode.com/problems/binary-tree-maximum-path-sum/">124 Maximum Path Sum</a>; <a href="https://leetcode.com/problems/subtree-of-another-tree/">572 Subtree of Another Tree</a></td></tr>
+<tr><td>7. Hard</td><td>Tree DP, serialization, greedy</td><td><a href="https://leetcode.com/problems/serialize-and-deserialize-binary-tree/">297 Serialize/Deserialize</a>; <a href="https://leetcode.com/problems/binary-tree-cameras/">968 Binary Tree Cameras</a>; <a href="https://leetcode.com/problems/house-robber-iii/">337 House Robber III</a></td></tr>
+</tbody></table>
+
+<h2>8. Interview checklist</h2>
+<ol>
+<li><strong>Input:</strong> Is the root allowed to be <code>None</code>?</li>
+<li><strong>Return type:</strong> Number, boolean, node, or list?</li>
+<li><strong>Decomposition:</strong> Can the problem be solved from left and right subtrees?</li>
+<li><strong>Base case:</strong> What should an empty subtree return for this particular problem?</li>
+<li><strong>Subtree information:</strong> What must each recursive call return?</li>
+<li><strong>Global state:</strong> Do I need to track a best answer across all nodes?</li>
+<li><strong>Complexity:</strong> How many visits per node? How deep can recursion or the queue grow?</li>
+<li><strong>Edge cases:</strong> Empty, single-node, skewed trees, missing children, negative values, duplicates.</li>
+</ol>
+
+<h2>9. First practice problem — LeetCode 104</h2>
+<p><strong><a href="https://leetcode.com/problems/maximum-depth-of-binary-tree/">Maximum Depth of Binary Tree</a></strong></p>
+<p>Given the root of a binary tree, return its maximum depth: the number of nodes along the longest path from the root down to a leaf.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 280" role="img" aria-label="Example tree for maximum depth: root 3, children 9 and 20, and 20 has children 15 and 7">
+<g stroke="#8ca0b8" stroke-width="3" fill="none"><path d="M300 45 L180 112 M300 45 L420 112 M420 142 L360 210 M420 142 L480 210"/></g>
+<g font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle"><g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><circle cx="300" cy="30" r="24"/><circle cx="180" cy="126" r="24"/><circle cx="420" cy="126" r="24"/><circle cx="360" cy="226" r="24"/><circle cx="480" cy="226" r="24"/></g><g fill="#182230"><text x="300" y="30">3</text><text x="180" y="126">9</text><text x="420" y="126">20</text><text x="360" y="226">15</text><text x="480" y="226">7</text></g></g>
+</svg><figcaption>Input: <code>[3, 9, 20, null, null, 15, 7]</code> · Output: <code>3</code></figcaption>
+</figure>
+<p>The depth of the whole tree is one plus the greater of the two subtree depths:</p>
+<div class="callout"><code>depth(root) = 1 + max(depth(root.left), depth(root.right))</code><br><code>depth(None) = 0</code></div>
+<pre><code>class Solution:
+    def maxDepth(self, root: Optional[TreeNode]) -> int:
+        # Your code here
+        pass</code></pre>
+<details><summary>Reveal the solution after trying it yourself</summary>
+<pre><code>class Solution:
+    def maxDepth(self, root: Optional[TreeNode]) -> int:
+        if root is None:
+            return 0
+
+        left_depth = self.maxDepth(root.left)
+        right_depth = self.maxDepth(root.right)
+
+        return 1 + max(left_depth, right_depth)</code></pre>
+<p><strong>Time:</strong> <code>O(n)</code>, every node is visited once. <strong>Auxiliary space:</strong> <code>O(h)</code> recursion stack, where <code>h</code> is the tree height.</p>
+</details>
+<h3>Practice prompts</h3>
+<ol>
+<li>What should the function return when <code>root is None</code>?</li>
+<li>How do you calculate the left and right subtree depths?</li>
+<li>Why do we add one to the maximum of those values?</li>
+</ol>
+<p>Try writing the solution from memory, then explain the base case, recurrence, and complexity aloud as you would in an interview.</p>
+
+<footer><p><strong>Suggested workflow:</strong> solve each problem yourself first, explain your approach aloud, then compare with a clean solution. Focus on recognizing the pattern rather than memorizing code.</p></footer>
+</main></body></html>
+
+
+

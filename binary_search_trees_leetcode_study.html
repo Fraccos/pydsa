@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Binary Search Trees for LeetCode — SDE Interview Study Guide</title>
+<style>
+:root{color-scheme:light;--ink:#182230;--muted:#526174;--line:#d9e1ea;--panel:#f5f8fc;--accent:#2459a9;--code:#101827}
+*{box-sizing:border-box}body{margin:0;background:#eef2f7;color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;background:#fff;padding:clamp(22px,5vw,60px);box-shadow:0 8px 35px #1d2a3a12}
+h1,h2,h3{line-height:1.25;letter-spacing:-.02em}h1{font-size:clamp(2rem,5vw,3rem);margin:.25em 0}h2{margin-top:2.1em;border-bottom:1px solid var(--line);padding-bottom:.4em}h3{margin-top:1.5em}p,li{max-width:78ch} .eyebrow{color:var(--accent);font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:.78rem}
+.lead{font-size:1.15rem;color:var(--muted)}.meta{color:var(--muted);font-size:.9rem}
+.callout{padding:16px 20px;border-left:4px solid var(--accent);background:var(--panel);border-radius:6px;margin:20px 0}
+figure{margin:24px auto;text-align:center}figure svg{width:min(100%,620px);height:auto}figcaption{font-size:.9rem;color:var(--muted);margin-top:8px}
+pre{overflow:auto;background:var(--code);color:#f3f6fb;padding:18px;border-radius:10px;line-height:1.55;font-size:.91rem}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}p code,li code,td code{background:#eef2f7;color:#24354b;padding:.1em .32em;border-radius:4px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.94rem}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--panel)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:10px;padding:16px}.card h3{margin-top:0}
+.small{font-size:.92rem;color:var(--muted)}.pill{display:inline-block;border:1px solid var(--line);padding:3px 9px;border-radius:999px;font-size:.8rem;margin:3px}
+details{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0}summary{cursor:pointer;font-weight:700}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
+@media print{body{background:white}main{box-shadow:none;max-width:none;padding:0}.card,pre,figure,table{break-inside:avoid}details{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<p class="eyebrow">Interview preparation · Python · LeetCode</p>
+<h1>Binary Search Trees: The Deep Dive</h1>
+<p class="lead">The study guide's Binary Trees file introduced BSTs in three paragraphs. This guide goes deep: the invariant, search and insert, why inorder means sorted, validation traps, deletion, and the patterns behind every medium BST problem.</p>
+<p class="meta">Includes embedded diagrams, Python examples, complexity analysis, a study roadmap, and your first practice problem. This file is self-contained and works offline. Companion guide: <a href="binary_trees_leetcode_study.html">Binary Trees</a>.</p>
+
+<h2>1. What is a BST?</h2>
+<p>A <strong>Binary Search Tree</strong> is a binary tree with an ordering rule. For <em>every</em> node:</p>
+<ul>
+<li>all values in its <strong>left subtree</strong> are <strong>less than</strong> the node's value, and</li>
+<li>all values in its <strong>right subtree</strong> are <strong>greater than</strong> the node's value.</li>
+</ul>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 300" role="img" aria-label="Valid BST with root 8, left child 3 with children 1 and 6, right child 10 with right child 14">
+<g stroke="#8ca0b8" stroke-width="3" fill="none"><path d="M310 54 L190 116 M310 54 L430 116 M190 146 L130 208 M190 146 L250 208 M430 146 L490 208"/></g>
+<g font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle"><g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><circle cx="310" cy="38" r="25"/><circle cx="190" cy="130" r="25"/><circle cx="430" cy="130" r="25"/><circle cx="130" cy="230" r="25"/><circle cx="250" cy="230" r="25"/><circle cx="490" cy="230" r="25"/></g><g fill="#182230"><text x="310" y="38">8</text><text x="190" y="130">3</text><text x="430" y="130">10</text><text x="130" y="230">1</text><text x="250" y="230">6</text><text x="490" y="230">14</text></g></g>
+</svg><figcaption>A valid BST. Inorder traversal visits <code>1, 3, 6, 8, 10, 14</code> — sorted order, every time.</figcaption>
+</figure>
+<div class="callout"><strong>The classic mistake:</strong> the rule applies to the <em>entire subtrees</em>, not just the immediate children. A node with value 12 placed in the left subtree of the root 8 above would violate the BST even if every parent-child pair looked locally ordered. Validation must carry bounds down the tree (Section 5).</div>
+<p>The conventional assumption is <strong>no duplicate values</strong>. If duplicates can appear, a common convention is left subtree &lt;= node, but LeetCode problems usually state what to do — ask if unclear.</p>
+
+<h2>2. Representing a BST in Python</h2>
+<p>Exactly the same <code>TreeNode</code> as any binary tree — the BST is a property of the <em>values</em>, not the class:</p>
+<pre><code>class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right</code></pre>
+<p>What changes is how you <em>navigate</em>. Instead of exploring both children, a search only descends one side:</p>
+<pre><code>def search(root, target):
+    node = root
+    while node:
+        if target &lt; node.val:
+            node = node.left      # everything here is smaller
+        elif target &gt; node.val:
+            node = node.right     # everything here is larger
+        else:
+            return node           # found it
+    return None</code></pre>
+<p><strong>Time:</strong> <code>O(h)</code> — <code>O(log n)</code> if balanced, <code>O(n)</code> if skewed. Each comparison eliminates an entire subtree, like binary search on a sorted array.</p>
+
+<h2>3. BST vs. binary tree vs. hash map</h2>
+<div class="grid">
+<div class="card"><h3>Binary tree</h3><p>No ordering. Search visits potentially every node: <code>O(n)</code>.</p><p class="small"><strong>Useful for:</strong> hierarchies and recursive decomposition where order doesn't matter.</p></div>
+<div class="card"><h3>BST</h3><p>Global ordering gives <code>O(h)</code> search, insert, delete, plus sorted-order iteration and range queries for free.</p><p class="small"><strong>Useful for:</strong> ordered data, kth-element, floor/ceiling, predecessor/successor.</p></div>
+<div class="card"><h3>Hash map</h3><p><code>O(1)</code> average point lookups, but values come out unordered — no kth-smallest, no ranges, no successor.</p><p class="small"><strong>Useful for:</strong> membership and counting where order is irrelevant.</p></div>
+</div>
+<p>The interview framing: a hash map answers <em>&quot;is this exact key present?&quot;</em> instantly. A BST additionally answers <em>&quot;what's the smallest key ≥ x?&quot;</em>, <em>&quot;how many keys below x?&quot;</em>, <em>&quot;give me the keys in order&quot;</em> — questions that would require scanning the whole hash map.</p>
+<table><thead><tr><th>Operation</th><td>Balanced BST</td><td>Hash map</td><td>Sorted array</td></tr></thead><tbody>
+<tr><td>Search exact key</td><td><code>O(log n)</code></td><td><code>O(1)</code> avg</td><td><code>O(log n)</code></td></tr>
+<tr><td>Insert / delete</td><td><code>O(log n)</code></td><td><code>O(1)</code> avg</td><td><code>O(n)</code> (shift)</td></tr>
+<tr><td>Min / max</td><td><code>O(log n)</code> (or O(1) cached)</td><td><code>O(n)</code></td><td><code>O(1)</code> at the ends</td></tr>
+<tr><td>Kth smallest / successor / range</td><td><code>O(log n)</code>–<code>O(n)</code></td><td><code>O(n)</code> scan</td><td><code>O(log n)</code> + scan</td></tr>
+<tr><td>Iterate in sorted order</td><td><code>O(n)</code> inorder</td><td>Sort first: <code>O(n log n)</code></td><td><code>O(n)</code>, already sorted</td></tr>
+</tbody></table>
+<p>The caveat interviewers expect you to state: all BST guarantees are <code>O(h)</code>, and <code>h</code> is only <code>O(log n)</code> when the tree is balanced. A tree built from sorted input degrades to a linked list. Self-balancing trees (AVL, red-black) fix this — Python's <code>sortedcontainers.SortedList</code> embodies the idea, though it isn't in the standard library.</p>
+
+<h2>4. When should you use a BST?</h2>
+<p>Reach for BST thinking whenever a problem combines <strong>hierarchy</strong> with <strong>order</strong>:</p>
+<table><thead><tr><th>Signal in the prompt</th><th>BST insight to apply</th></tr></thead><tbody>
+<tr><td>&quot;Kth smallest/largest element&quot;</td><td>Inorder traversal yields sorted order; stop at the kth visit</td></tr>
+<tr><td>&quot;Validate / it's a BST&quot;</td><td>Propagate <code>(low, high)</code> bounds, or check inorder is strictly increasing</td></tr>
+<tr><td>&quot;LCA of two nodes in a BST&quot;</td><td>The LCA is the first node where p and q split to different sides — <code>O(h)</code>, no parent pointers</td></tr>
+<tr><td>&quot;Range sum / count values in [L, R]&quot;</td><td>Prune: skip entire subtrees outside the range</td></tr>
+<tr><td>&quot;Insert / delete / successor / predecessor&quot;</td><td>Descend one side at a time; deletion needs the successor trick (Section 6)</td></tr>
+<tr><td>&quot;Build a BST from data&quot;</td><td>Sorted array's middle element becomes a balanced root (<a href="https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree/">108</a>)</td></tr>
+</tbody></table>
+<p>Conversely, if the tree is <em>not</em> a BST, none of these apply — you're back to general tree DFS/BFS from the Binary Trees guide, typically <code>O(n)</code>.</p>
+
+<h2>5. Four core interview patterns</h2>
+<h3>Pattern 1 — Inorder traversal is your superpower</h3>
+<p>Inorder (left → root → right) visits a BST's values in <strong>strictly increasing order</strong>. This single fact unlocks a family of problems:</p>
+<pre><code>def inorder(root):
+    if root is None:
+        return
+    yield from inorder(root.left)
+    yield root.val
+    yield from inorder(root.right)</code></pre>
+<p>For kth-smallest, you don't even need the whole traversal — count visits and stop early. For &quot;find the inorder successor of value x&quot;, inorder gives the next value after x. If a <em>general</em> binary tree problem involves &quot;sorted output&quot; or &quot;closest value to k&quot;, and the input is a BST, this is the lever.</p>
+
+<h3>Pattern 2 — Validate with bounds</h3>
+<p>The trap from Section 1 deserves its pattern. Each recursive call passes down the valid open interval for its subtree:</p>
+<pre><code>def is_valid(node, low=float('-inf'), high=float('inf')):
+    if node is None:
+        return True
+    if not (low &lt; node.val &lt; high):
+        return False
+    return (is_valid(node.left, low, node.val) and
+            is_valid(node.right, node.val, high))</code></pre>
+<p>A neat alternative: run an inorder traversal and assert each value is strictly greater than the previous one. Both are <code>O(n)</code>. Common problems: <a href="https://leetcode.com/problems/validate-binary-search-tree/">Validate BST (98)</a>, <a href="https://leetcode.com/problems/recover-binary-search-tree/">Recover BST (99)</a> — where exactly one inorder swap broke the order.</p>
+
+<h3>Pattern 3 — Descend, don't traverse: LCA and range queries</h3>
+<p>When searching for a single node or answer, you can often go straight down one path instead of visiting everything. For the lowest common ancestor of two values <code>p</code> and <code>q</code>:</p>
+<pre><code>def lowest_common_ancestor(root, p, q):
+    node = root
+    while node:
+        if p.val &lt; node.val and q.val &lt; node.val:
+            node = node.left       # both in left subtree
+        elif p.val &gt; node.val and q.val &gt; node.val:
+            node = node.right      # both in right subtree
+        else:
+            return node            # they split here — this is the LCA</code></pre>
+<p>Range queries prune the same way: recurse into the left child only if <code>L &lt; node.val</code>, into the right only if <code>node.val &lt; R</code>. Common problems: <a href="https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/">LCA of a BST (235)</a>, <a href="https://leetcode.com/problems/range-sum-of-bst/">Range Sum of BST (938)</a>, <a href="https://leetcode.com/problems/closest-binary-search-tree-value/">Closest Value in BST (270)</a>.</p>
+
+<h3>Pattern 4 — Structural surgery: insert, delete, build</h3>
+<p>Insertion is a search that ends in a <code>None</code>: walk down exactly the path you would walk to <em>find</em> the value, and when you fall off the tree, hang the new node there. The new node is always a leaf, and no rebalancing is expected in interviews.</p>
+<pre><code>def insert(root, val):
+    if root is None:
+        return TreeNode(val)          # fell off the tree — attach here
+    if val &lt; root.val:
+        root.left = insert(root.left, val)
+    elif val &gt; root.val:
+        root.right = insert(root.right, val)
+    return root</code></pre>
+<p>The <code>root.left = insert(...)</code> assignment is the idiom that confuses people: it re-links each node to its (unchanged) subtree on the way back up, and actually does work only at the <code>None</code> — where it attaches the new leaf. The iterative version makes the mechanics explicit:</p>
+<pre><code>def insert_iterative(root, val):
+    if root is None:
+        return TreeNode(val)
+    node = root
+    while True:
+        if val &lt; node.val:
+            if node.left is None:
+                node.left = TreeNode(val)
+                return root
+            node = node.left
+        elif val &gt; node.val:
+            if node.right is None:
+                node.right = TreeNode(val)
+                return root
+            node = node.right
+        else:
+            return root              # duplicate — convention-dependent, usually ignored</code></pre>
+<p>Example — insert <code>1</code> into the practice tree below:</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 340" role="img" aria-label="Inserting 1 into BST 5,3,6,2,4,7: the search path 5,3,2 is highlighted and 1 is attached as the left child of 2">
+<g stroke="#8ca0b8" stroke-width="3" fill="none"><path d="M310 56 L430 114 M190 146 L250 204 M430 146 L490 204"/></g>
+<g stroke="#c98a2b" stroke-width="3" fill="none"><path d="M310 56 L190 114 M190 146 L130 204 M130 236 L84 285"/></g>
+<g font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle">
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><circle cx="310" cy="40" r="25"/><circle cx="190" cy="130" r="25"/><circle cx="430" cy="130" r="25"/><circle cx="130" cy="220" r="25"/><circle cx="250" cy="220" r="25"/><circle cx="490" cy="220" r="25"/></g>
+<g fill="#fdf3e3" stroke="#c98a2b" stroke-dasharray="5 4" stroke-width="2"><circle cx="80" cy="305" r="25"/></g>
+<g fill="#182230"><text x="310" y="40">5</text><text x="190" y="130">3</text><text x="430" y="130">6</text><text x="130" y="220">2</text><text x="250" y="220">4</text><text x="490" y="220">7</text></g>
+<g fill="#c98a2b"><text x="80" y="305">1</text></g>
+</g>
+</svg><figcaption>1 &lt; 5 → go left · 1 &lt; 3 → go left · 1 &lt; 2 → go left · <code>None</code> → attach. Three comparisons = tree height. Inorder is unchanged in spirit: <code>1, 2, 3, 4, 5, 6, 7</code> — still sorted.</figcaption>
+</figure>
+<p><strong>Cost:</strong> one root-to-attach-point path — <code>O(h)</code> time (<code>O(log n)</code> balanced, <code>O(n)</code> skewed), <code>O(1)</code> extra space iteratively or <code>O(h)</code> recursion stack. A useful contrast with the heap: a heap push always travels leaf-to-root (its position is forced by completeness), while a BST insert can land at <em>any</em> depth — its cost is determined by the value, which is exactly why repeatedly inserting sorted data into a BST builds a skew (a linked list) rather than a balanced tree.</p>
+<p>Delete (<a href="https://leetcode.com/problems/delete-node-in-a-bst/">450</a>) has three cases, and the third is the famous one:</p>
+<ul>
+<li><strong>Leaf or one child:</strong> replace the node with its child (or <code>None</code>).</li>
+<li><strong>Two children:</strong> find the node's <strong>inorder successor</strong> (smallest value in the right subtree — go right once, then all the way left), copy its value into the node, then delete that successor, which has at most one child.</li>
+</ul>
+<pre><code>def delete_node(root, key):
+    if root is None:
+        return None
+    if key &lt; root.val:
+        root.left = delete_node(root.left, key)
+    elif key &gt; root.val:
+        root.right = delete_node(root.right, key)
+    else:
+        if root.left is None:
+            return root.right
+        if root.right is None:
+            return root.left
+        successor = root.right
+        while successor.left:
+            successor = successor.left
+        root.val = successor.val
+        root.right = delete_node(root.right, successor.val)
+    return root</code></pre>
+<p>Building: to turn a sorted array into a <em>balanced</em> BST, the middle element is the root and the two halves recurse (<a href="https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree/">108</a>). All of these are <code>O(h)</code> per operation, <code>O(n)</code> to build.</p>
+
+<h2>6. Study roadmap</h2>
+<table><thead><tr><th>Stage</th><th>Focus</th><th>Representative LeetCode problems</th></tr></thead><tbody>
+<tr><td>1. Foundations</td><td>Search, insert, the invariant</td><td><a href="https://leetcode.com/problems/search-in-a-binary-search-tree/">700 Search in a BST</a>; <a href="https://leetcode.com/problems/insert-into-a-binary-search-tree/">701 Insert into a BST</a></td></tr>
+<tr><td>2. Inorder thinking</td><td>Sorted order, early stopping</td><td><a href="https://leetcode.com/problems/kth-smallest-element-in-a-bst/">230 Kth Smallest</a>; <a href="https://leetcode.com/problems/minimum-absolute-difference-in-bst/">530 Minimum Absolute Difference</a>; <a href="https://leetcode.com/problems/find-mode-in-binary-search-tree/">501 Find Mode</a></td></tr>
+<tr><td>3. Validation</td><td>Bounds, inorder check</td><td><a href="https://leetcode.com/problems/validate-binary-search-tree/">98 Validate BST</a>; <a href="https://leetcode.com/problems/recover-binary-search-tree/">99 Recover BST</a></td></tr>
+<tr><td>4. Descending search</td><td>LCA, pruning, ranges</td><td><a href="https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/">235 LCA of BST</a>; <a href="https://leetcode.com/problems/range-sum-of-bst/">938 Range Sum of BST</a>; <a href="https://leetcode.com/problems/closest-binary-search-tree-value/">270 Closest Value</a></td></tr>
+<tr><td>5. Construction &amp; surgery</td><td>Build balanced, delete node</td><td><a href="https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree/">108 Sorted Array to BST</a>; <a href="https://leetcode.com/problems/delete-node-in-a-bst/">450 Delete Node</a>; <a href="https://leetcode.com/problems/binary-search-tree-to-greater-sum-tree/">1038 BST to Greater Sum Tree</a></td></tr>
+<tr><td>6. Advanced</td><td>Iterators, cumulative state</td><td><a href="https://leetcode.com/problems/binary-search-tree-iterator/">173 BST Iterator</a>; <a href="https://leetcode.com/problems/two-sum-iv-input-is-a-bst/">653 Two Sum IV</a>; <a href="https://leetcode.com/problems/convert-binary-search-tree-to-sorted-doubly-linked-list/">426 Convert to Sorted Doubly Linked List</a></td></tr>
+</tbody></table>
+
+<h2>7. Interview checklist</h2>
+<ol>
+<li><strong>Is it actually a BST?</strong> If the problem says so, use <code>O(h)</code> tools — never do a generic <code>O(n)</code> traversal when a descent suffices.</li>
+<li><strong>Subtree-wide vs. local:</strong> Does my reasoning hold for entire subtrees, or only immediate children?</li>
+<li><strong>Bounds:</strong> For validation, what interval does each recursive call inherit?</li>
+<li><strong>Duplicates:</strong> Are they possible, and does the problem define a convention?</li>
+<li><strong>Balance:</strong> Am I quoting <code>O(log n)</code> without justification? Say &quot;<code>O(h)</code>, <code>O(log n)</code> if balanced&quot;.</li>
+<li><strong>Traversal choice:</strong> Do I need sorted order (inorder), or just a path down the tree?</li>
+<li><strong>Early stopping:</strong> Can I stop the inorder at the kth visit instead of building a full list?</li>
+<li><strong>Edge cases:</strong> Empty tree, single node, target equal to a node, skewed tree, deleting the root.</li>
+</ol>
+
+<h2>8. First practice problem — LeetCode 230</h2>
+<p><strong><a href="https://leetcode.com/problems/kth-smallest-element-in-a-bst/">Kth Smallest Element in a BST</a></strong></p>
+<p>Given the root of a BST and an integer <code>k</code>, return the kth smallest value among all nodes (1-indexed).</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" role="img" aria-label="BST with root 5, left child 3 with children 2 and 4, right child 6 with right child 7; inorder is 2 3 4 5 6 7">
+<g stroke="#8ca0b8" stroke-width="3" fill="none"><path d="M300 54 L180 116 M300 54 L420 116 M180 146 L120 208 M180 146 L240 208 M420 146 L480 208"/></g>
+<g font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle"><g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><circle cx="300" cy="38" r="25"/><circle cx="180" cy="130" r="25"/><circle cx="420" cy="130" r="25"/><circle cx="120" cy="230" r="25"/><circle cx="240" cy="230" r="25"/><circle cx="480" cy="230" r="25"/></g><g fill="#182230"><text x="300" y="38">5</text><text x="180" y="130">3</text><text x="420" y="130">6</text><text x="120" y="230">2</text><text x="240" y="230">4</text><text x="480" y="230">7</text></g></g>
+</svg><figcaption>Inorder visits <code>2, 3, 4, 5, 6, 7</code> — so k = 3 returns <code>4</code>.</figcaption>
+</figure>
+<p>Inorder traversal emits values smallest-first. The kth value emitted is the answer. Naively you could build the whole sorted list; the polished solution stops as soon as the counter hits k.</p>
+<div class="callout"><strong>Pattern:</strong> inorder traversal + a counter. <code>visit(node)</code> = recurse left, consume node, recurse right — and &quot;consume&quot; means <em>increment the counter and return the value if it equals k</em>.</div>
+<pre><code>class Solution:
+    def kthSmallest(self, root: Optional[TreeNode], k: int) -&gt; int:
+        # Your code here
+        pass</code></pre>
+<details><summary>Reveal the solution after trying it yourself</summary>
+<pre><code>class Solution:
+    def kthSmallest(self, root: Optional[TreeNode], k: int) -&gt; int:
+        self.count = 0
+        self.result = None
+
+        def inorder(node):
+            if node is None or self.result is not None:
+                return
+            inorder(node.left)
+            self.count += 1
+            if self.count == k:
+                self.result = node.val
+                return
+            inorder(node.right)
+
+        inorder(root)
+        return self.result</code></pre>
+<p><strong>Time:</strong> <code>O(H + k)</code> — you descend to the smallest node (height <code>H</code>) and then visit k nodes; in the worst case <code>O(n)</code>. <strong>Space:</strong> <code>O(H)</code> for the recursion stack.</p>
+<p><strong>Follow-up the interviewer will ask:</strong> what if the tree is frequently inserted into and deleted from? Then an inorder list goes stale — the real answer is augmenting each node with the size of its subtree, so you can descend to the kth element in <code>O(h)</code> without traversal.</p>
+</details>
+<h3>Practice prompts</h3>
+<ol>
+<li>Why does inorder traversal of a BST produce sorted values — can you argue it from the invariant?</li>
+<li>What should happen once the counter reaches k — why is the early-exit check before and after recursion useful?</li>
+<li>How would you find the kth <em>largest</em> instead — what's the minimal change?</li>
+</ol>
+<p>Try writing the solution from memory, then explain the invariant, the traversal order, and the complexity aloud as you would in an interview.</p>
+
+<footer><p><strong>Suggested workflow:</strong> solve each problem yourself first, explain your approach aloud, then compare with a clean solution. Focus on recognizing the pattern rather than memorizing code. Next in the series: <a href="heaps_priority_queues_leetcode_study.html">Heaps &amp; Priority Queues</a>.</p></footer>
+</main></body></html>
+
+
+
+

@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heaps &amp; Priority Queues for LeetCode — SDE Interview Study Guide</title>
+<style>
+:root{color-scheme:light;--ink:#182230;--muted:#526174;--line:#d9e1ea;--panel:#f5f8fc;--accent:#2459a9;--code:#101827}
+*{box-sizing:border-box}body{margin:0;background:#eef2f7;color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;background:#fff;padding:clamp(22px,5vw,60px);box-shadow:0 8px 35px #1d2a3a12}
+h1,h2,h3{line-height:1.25;letter-spacing:-.02em}h1{font-size:clamp(2rem,5vw,3rem);margin:.25em 0}h2{margin-top:2.1em;border-bottom:1px solid var(--line);padding-bottom:.4em}h3{margin-top:1.5em}p,li{max-width:78ch} .eyebrow{color:var(--accent);font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:.78rem}
+.lead{font-size:1.15rem;color:var(--muted)}.meta{color:var(--muted);font-size:.9rem}
+.callout{padding:16px 20px;border-left:4px solid var(--accent);background:var(--panel);border-radius:6px;margin:20px 0}
+figure{margin:24px auto;text-align:center}figure svg{width:min(100%,620px);height:auto}figcaption{font-size:.9rem;color:var(--muted);margin-top:8px}
+pre{overflow:auto;background:var(--code);color:#f3f6fb;padding:18px;border-radius:10px;line-height:1.55;font-size:.91rem}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}p code,li code,td code{background:#eef2f7;color:#24354b;padding:.1em .32em;border-radius:4px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.94rem}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--panel)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:10px;padding:16px}.card h3{margin-top:0}
+.small{font-size:.92rem;color:var(--muted)}.pill{display:inline-block;border:1px solid var(--line);padding:3px 9px;border-radius:999px;font-size:.8rem;margin:3px}
+details{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0}summary{cursor:pointer;font-weight:700}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
+@media print{body{background:white}main{box-shadow:none;max-width:none;padding:0}.card,pre,figure,table{break-inside:avoid}details{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<p class="eyebrow">Interview preparation · Python · LeetCode</p>
+<h1>Heaps &amp; Priority Queues: From Fundamentals to Medium &amp; Hard</h1>
+<p class="lead">A practical, NeetCode-inspired study guide for SDE mid-level interviews. The Binary Trees guide compared heaps and mentioned <code>heapq</code> — this guide teaches them: the shape, the operations, the top-k pattern, and the two-heap trick.</p>
+<p class="meta">Includes embedded diagrams, Python examples, complexity analysis, a study roadmap, and your first practice problem. This file is self-contained and works offline. Companion guides: <a href="binary_trees_leetcode_study.html">Binary Trees</a> · <a href="graphs_leetcode_study.html">Graphs</a>.</p>
+
+<h2>1. What is a heap?</h2>
+<p>A <strong>binary heap</strong> is a complete binary tree — every level full except possibly the last, which fills left to right — where each parent obeys an ordering rule relative to its children:</p>
+<ul>
+<li><strong>Min-heap:</strong> every parent ≤ its children, so the <strong>minimum is always at the root</strong>.</li>
+<li><strong>Max-heap:</strong> every parent ≥ its children, so the maximum is at the root.</li>
+</ul>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" role="img" aria-label="Min-heap with root 1, children 3 and 2, and leaves 6, 4, 5, and 9">
+<g stroke="#8ca0b8" stroke-width="3" fill="none"><path d="M300 54 L180 116 M300 54 L420 116 M180 146 L120 208 M180 146 L240 208 M420 146 L360 208 M420 146 L480 208"/></g>
+<g font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle"><g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><circle cx="300" cy="38" r="25"/><circle cx="180" cy="130" r="25"/><circle cx="420" cy="130" r="25"/><circle cx="120" cy="230" r="25"/><circle cx="240" cy="230" r="25"/><circle cx="360" cy="230" r="25"/><circle cx="480" cy="230" r="25"/></g><g fill="#182230"><text x="300" y="38">1</text><text x="180" y="130">3</text><text x="420" y="130">2</text><text x="120" y="230">6</text><text x="240" y="230">4</text><text x="360" y="230">5</text><text x="480" y="230">9</text></g></g>
+</svg><figcaption>A min-heap. Every parent is ≤ its children, but siblings and cousins are unordered — 3 and 2 can be on either side.</figcaption>
+</figure>
+<ul>
+<li><strong>Only the root is guaranteed extreme.</strong> Nothing else is sorted — finding an arbitrary value still takes <code>O(n)</code>.</li>
+<li><strong>Completeness matters:</strong> it's what lets a heap live in a flat array with no pointers.</li>
+<li><strong>Python's <code>heapq</code> is a min-heap</strong>, backed by a plain list. For a max-heap, negate values on the way in and out.</li>
+</ul>
+
+<h2>2. Representing a heap in Python</h2>
+<p>You almost never build node objects. <code>heapq</code> operates on a regular list:</p>
+<pre><code>import heapq
+
+nums = [5, 3, 8, 1, 9]
+heapq.heapify(nums)          # O(n) — rearranges the list in place into a min-heap
+
+smallest = heapq.heappop(nums)    # 1, O(log n)
+heapq.heappush(nums, 2)           # O(log n)
+heapq.heappush(nums, 0)
+next_smallest = heapq.heappop(nums)   # 0
+
+print(nums[0])               # peek at the min without popping, O(1)</code></pre>
+<p>The array layout behind the scenes: for index <code>i</code>, the parent is at <code>(i − 1) // 2</code>, children at <code>2i + 1</code> and <code>2i + 2</code>. Every operation is just swaps in this array — no node objects, no pointers.</p>
+
+<h3>How insertion works (sift-up)</h3>
+<p><code>heappush(x)</code> does exactly three things: <strong>append</strong> <code>x</code> at the end of the list (keeping the tree complete), then <strong>compare with its parent</strong> and <strong>swap if out of order</strong>, repeating until the parent is ≤ the new node or you reach the root. This is called <em>sift-up</em>, and it walks a single path from a leaf toward the root.</p>
+<p>Example — insert <code>1</code> into the min-heap <code>[2, 5, 3, 7]</code>:</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" role="img" aria-label="Inserting 1 into min-heap 2,5,3,7: 1 is appended as child of 5, then swaps up past 5 and 2 to become the root">
+<g stroke="#8ca0b8" stroke-width="3" fill="none"><path d="M160 64 L100 126 M160 64 L220 126 M100 156 L70 218 M100 156 L130 218"/><path d="M480 64 L420 126 M480 64 L540 126 M420 156 L390 218 M420 156 L450 218"/></g>
+<g font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle">
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><circle cx="160" cy="48" r="25"/><circle cx="100" cy="140" r="25"/><circle cx="220" cy="140" r="25"/><circle cx="70" cy="232" r="25"/><circle cx="480" cy="48" r="25"/><circle cx="420" cy="140" r="25"/><circle cx="540" cy="140" r="25"/><circle cx="390" cy="232" r="25"/><circle cx="450" cy="232" r="25"/></g>
+<g fill="#fdf3e3" stroke="#c98a2b" stroke-dasharray="5 4" stroke-width="2"><circle cx="130" cy="232" r="25"/></g>
+<g fill="#182230"><text x="160" y="48">2</text><text x="100" y="140">5</text><text x="220" y="140">3</text><text x="70" y="232">7</text><text x="480" y="48">1</text><text x="420" y="140">2</text><text x="540" y="140">3</text><text x="390" y="232">7</text><text x="450" y="232">5</text></g>
+<g fill="#c98a2b"><text x="130" y="232">1</text></g>
+<g fill="#526174" font-size="15"><text x="160" y="12">before: append 1</text><text x="480" y="12">after: sift-up, 2 swaps</text></g>
+</g>
+<path d="M270 140 L370 140" stroke="#2459a9" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="#2459a9"/></marker></defs>
+</svg><figcaption>Append 1 as the left child of 5 → 1 &lt; 5, swap. Now 1's parent is 2 → 1 &lt; 2, swap. 1 is the root, stop. Array: <code>[2, 5, 3, 7, 1]</code> → <code>[2, 1, 3, 7, 5]</code> → <code>[1, 2, 3, 7, 5]</code>.</figcaption>
+</figure>
+<p><strong>Cost:</strong> the element can only climb from leaf to root — at most <code>⌊log₂ n⌋</code> swaps — so insertion is <code>O(log n)</code> worst case, <code>O(1)</code> when the new value is large and stops immediately (the average push does much less work than the worst case). The mirror image is <code>heappop</code>: remove the root, move the <em>last</em> element to the root to keep the tree complete, then <em>sift-down</em> — swap with the smaller child until both children are ≥ — also at most <code>O(log n)</code>.</p>
+
+<h3>Why heapify is O(n), not O(n log n)</h3>
+<p><code>heapify</code> doesn't insert n times. It runs <strong>sift-down from the last parent backwards to the root</strong>, so each node only has to sink into the part of the tree below it. The trick is that almost all nodes sit near the bottom, where there's almost nowhere to sink:</p>
+<table><thead><tr><th>Height above leaves</th><th>At most this many nodes</th><th>Sift-down cost each</th><th>Subtotal</th></tr></thead><tbody>
+<tr><td>0 (leaves)</td><td>n/2</td><td>0</td><td>0</td></tr>
+<tr><td>1</td><td>n/4</td><td>1</td><td>n/4</td></tr>
+<tr><td>2</td><td>n/8</td><td>2</td><td>n/4</td></tr>
+<tr><td>3</td><td>n/16</td><td>3</td><td>3n/16</td></tr>
+<tr><td>…</td><td>…</td><td>…</td><td>…</td></tr>
+<tr><td>h</td><td>n/2^(h+1)</td><td>h</td><td>→ 0 as h grows</td></tr>
+</tbody></table>
+<div class="callout"><strong>The sum:</strong> total work ≤ <code>Σₕ n·h / 2^(h+1) = (n/2)·Σₕ h/2ʰ = (n/2)·2 = O(n)</code>. Intuition for interviews: <em>half the nodes are leaves that cost nothing, a quarter move one step, an eighth move two steps</em> — the expensive root-to-leaf work happens to only one node, and the series converges to a constant times n. That's why building a heap bottom-up beats doing n pushes (<code>O(n log n)</code>).</div>
+<p>In interviews, quote it as: &quot;<code>heapify</code> is O(n) because it sifts down level by level, and the number of nodes at each level halves while each level's cost only grows by one — the series sums to O(n).&quot;</p>
+
+<p>The two idioms you'll type in every interview:</p>
+<pre><code># Max-heap by negation
+heapq.heappush(heap, -val)
+biggest = -heapq.heappop(heap)
+
+# Heap of (key, value) tuples — sorted by key, then value
+heapq.heappush(heap, (distance, node))
+dist, node = heapq.heappop(heap)</code></pre>
+
+<h2>3. Heap vs. sorted array vs. BST</h2>
+<div class="grid">
+<div class="card"><h3>Heap</h3><p>Fast access to one extreme: <code>O(1)</code> peek, <code>O(log n)</code> push/pop. Everything else is expensive.</p><p class="small"><strong>Useful for:</strong> top-k, scheduling, streaming min/max, Dijkstra.</p></div>
+<div class="card"><h3>Sorted array</h3><p><code>O(1)</code> access to all extremes, but insertions shift elements: <code>O(n)</code>.</p><p class="small"><strong>Useful for:</strong> static data you build once and binary-search often.</p></div>
+<div class="card"><h3>Balanced BST</h3><p>Full ordering: <code>O(log n)</code> insert, delete, <em>and</em> arbitrary search, successor, kth.</p><p class="small"><strong>Useful for:</strong> when you need order and lookups, not just the extreme. See the <a href="binary_search_trees_leetcode_study.html">BST guide</a>.</p></div>
+</div>
+<table><thead><tr><th>Operation</th><th>Heap</th><th>Sorted array</th><th>Balanced BST</th></tr></thead><tbody>
+<tr><td>Peek min/max</td><td><code>O(1)</code></td><td><code>O(1)</code></td><td><code>O(log n)</code></td></tr>
+<tr><td>Push</td><td><code>O(log n)</code></td><td><code>O(n)</code></td><td><code>O(log n)</code></td></tr>
+<tr><td>Pop min/max</td><td><code>O(log n)</code></td><td><code>O(1)</code> (at an end)</td><td><code>O(log n)</code></td></tr>
+<tr><td>Search arbitrary value</td><td><code>O(n)</code></td><td><code>O(log n)</code></td><td><code>O(log n)</code></td></tr>
+<tr><td>Build from n items</td><td><code>O(n)</code> heapify</td><td><code>O(n log n)</code> sort</td><td><code>O(n log n)</code> inserts</td></tr>
+</tbody></table>
+<div class="callout"><strong>The interview rule of thumb:</strong> when a problem says &quot;keep track of the k largest / k closest / most frequent / next event&quot;, you usually don't need full sorting — you need a heap of size k (or a min-heap of the k best seen so far). Sorting the whole input is <code>O(n log n)</code>; a size-k heap is <code>O(n log k)</code>.</div>
+
+<h2>4. When should you use a heap?</h2>
+<table><thead><tr><th>Signal in the prompt</th><th>Heap play</th><th>Typical problem</th></tr></thead><tbody>
+<tr><td>&quot;K largest / smallest / closest / most frequent&quot;</td><td>Heap of size k; or <code>heapify</code> + k pops for k smallest</td><td><a href="https://leetcode.com/problems/kth-largest-element-in-an-array/">215</a>, <a href="https://leetcode.com/problems/top-k-frequent-elements/">347</a>, <a href="https://leetcode.com/problems/k-closest-points-to-origin/">973</a></td></tr>
+<tr><td>&quot;Merge k sorted lists / streams&quot;</td><td>Min-heap seeded with each list's head; repeatedly pop-and-advance</td><td><a href="https://leetcode.com/problems/merge-k-sorted-lists/">23</a></td></tr>
+<tr><td>&quot;Schedule / serve the highest priority task&quot;</td><td>Max-heap on priority; pop, process, push back</td><td><a href="https://leetcode.com/problems/task-scheduler/">621</a></td></tr>
+<tr><td>&quot;Running median of a stream&quot;</td><td>Two heaps splitting the data in half (Section 5, Pattern 4)</td><td><a href="https://leetcode.com/problems/find-median-from-data-stream/">295</a></td></tr>
+<tr><td>&quot;Always process the cheapest/nearest node next&quot;</td><td>Dijkstra — a heap keyed by distance</td><td><a href="https://leetcode.com/problems/network-delay-time/">743</a>, <a href="https://leetcode.com/problems/path-with-minimum-effort/">1631</a> (see the <a href="graphs_leetcode_study.html">Graphs guide</a>)</td></tr>
+<tr><td>&quot;Minimum cost to connect / combine all&quot;</td><td>Greedily pop the two smallest, combine, push back</td><td><a href="https://leetcode.com/problems/minimum-cost-to-connect-sticks/">1167</a>, <a href="https://leetcode.com/problems/last-stone-weight/">1046</a></td></tr>
+</tbody></table>
+<p>Heaps are also the natural fit for &quot;streaming&quot; problems: data arrives one element at a time and you must answer after each one without re-sorting.</p>
+
+<h2>5. Four core interview patterns</h2>
+<h3>Pattern 1 — Top-k with a size-k heap</h3>
+<p>For the k <em>largest</em> elements, keep a min-heap of size k. The heap's root is the smallest of the &quot;champions&quot; — any new element that can't beat it is discarded in <code>O(1)</code>; ones that can, replace it in <code>O(log k)</code>.</p>
+<pre><code>import heapq
+
+def k_largest(nums, k):
+    heap = []
+    for num in nums:
+        heapq.heappush(heap, num)
+        if len(heap) &gt; k:
+            heapq.heappop(heap)    # evict the smallest of the k+1
+    return heap                    # k largest, unordered internally</code></pre>
+<p><strong>Time:</strong> <code>O(n log k)</code>, <strong>space:</strong> <code>O(k)</code> — better than sorting (<code>O(n log n)</code>, <code>O(n)</code>) whenever <code>k &lt; n</code>. Note the counterintuitive choice: <em>min</em>-heap for the k largest, <em>max</em>-heap for the k smallest. Common problems: <a href="https://leetcode.com/problems/kth-largest-element-in-an-array/">Kth Largest Element (215)</a>, <a href="https://leetcode.com/problems/k-closest-points-to-origin/">K Closest Points to Origin (973)</a>, <a href="https://leetcode.com/problems/top-k-frequent-elements/">Top K Frequent Elements (347, with a hash map counting frequencies first)</a>.</p>
+
+<h3>Pattern 2 — Merge k sorted lists</h3>
+<p>Put the head of each list in a min-heap. Pop the global smallest, append it, push that list's next element. The heap always holds exactly one candidate per list.</p>
+<pre><code>def merge_k_lists(lists):
+    import heapq
+    heap = [(node.val, i, node) for i, node in enumerate(lists) if node]
+    heapq.heapify(heap)
+    dummy = tail = ListNode()
+
+    while heap:
+        _, i, node = heapq.heappop(heap)
+        tail.next = node
+        tail = node
+        if node.next:
+            heapq.heappush(heap, (node.next.val, i, node.next))
+    return dummy.next</code></pre>
+<div class="callout"><strong>The tuple-index trick:</strong> tuples compare element by element, and <code>ListNode</code> objects can't be compared. The <code>i</code> breaks ties so Python never falls through to comparing nodes.</div>
+<p><strong>Time:</strong> <code>O(N log k)</code> for <code>N</code> total nodes across <code>k</code> lists. Common problems: <a href="https://leetcode.com/problems/merge-k-sorted-lists/">Merge k Sorted Lists (23)</a>, <a href="https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists/">Smallest Range from k Lists (632)</a>, <a href="https://leetcode.com/problems/ugly-number-ii/">Ugly Number II (264)</a>.</p>
+
+<h3>Pattern 3 — Greedy &quot;process the extreme&quot; simulation</h3>
+<p>Whenever the correct next move is &quot;take the currently largest (or smallest, or most urgent) item, do something to it, and it may come back&quot;, a heap encodes the whole loop:</p>
+<pre><code>while heap and remaining_moves:
+    priority, task = heapq.heappop(heap)
+    # process task ...
+    if not task.finished:
+        heapq.heappush(heap, (new_priority, task))</code></pre>
+<p>The greedy part — <em>why</em> taking the extreme is always safe — is the part you must justify aloud. Common problems: <a href="https://leetcode.com/problems/last-stone-weight/">Last Stone Weight (1046)</a>, <a href="https://leetcode.com/problems/task-scheduler/">Task Scheduler (621)</a>, <a href="https://leetcode.com/problems/reorganize-string/">Reorganize String (767)</a>, <a href="https://leetcode.com/problems/minimum-cost-to-connect-sticks/">Minimum Cost to Connect Sticks (1167)</a>.</p>
+
+<h3>Pattern 4 — Two heaps (the median pattern)</h3>
+<p>A stream's median needs the middle of unordered data. Split the stream into a <strong>max-heap holding the smaller half</strong> and a <strong>min-heap holding the larger half</strong>. Then the median is either the top of the larger half or the average of both tops.</p>
+<pre><code>class MedianFinder:
+    def __init__(self):
+        self.small = []   # max-heap (negated): smaller half
+        self.large = []   # min-heap: larger half
+
+    def add_num(self, num):
+        heapq.heappush(self.small, -num)
+        # ensure every element in small <= every element in large
+        heapq.heappush(self.large, -heapq.heappop(self.small))
+        # keep small equal in size or one ahead
+        if len(self.large) &gt; len(self.small):
+            heapq.heappush(self.small, -heapq.heappop(self.large))
+
+    def find_median(self):
+        if len(self.small) &gt; len(self.large):
+            return -self.small[0]
+        return (-self.small[0] + self.large[0]) / 2</code></pre>
+<p><strong>Time:</strong> <code>O(log n)</code> per add, <code>O(1)</code> per query. Hard to invent under pressure — worth memorizing the invariants: (1) max(small) ≤ min(large), (2) sizes differ by at most 1. Common problems: <a href="https://leetcode.com/problems/find-median-from-data-stream/">Find Median from Data Stream (295)</a>, <a href="https://leetcode.com/problems/sliding-window-median/">Sliding Window Median (480)</a>, <a href="https://leetcode.com/problems/ipo/">IPO (502)</a>.</p>
+
+<h2>6. Study roadmap</h2>
+<table><thead><tr><th>Stage</th><th>Focus</th><th>Representative LeetCode problems</th></tr></thead><tbody>
+<tr><td>1. Foundations</td><td>heapq, push/pop/heapify, max-heap idiom</td><td><a href="https://leetcode.com/problems/sort-an-array/">912 (practice heapify)</a>; <a href="https://leetcode.com/problems/kth-largest-element-in-a-stream/">703 Kth Largest in a Stream</a></td></tr>
+<tr><td>2. Top-k</td><td>Size-k min-heap, frequency counting</td><td><a href="https://leetcode.com/problems/kth-largest-element-in-an-array/">215 Kth Largest Element</a>; <a href="https://leetcode.com/problems/k-closest-points-to-origin/">973 K Closest Points</a>; <a href="https://leetcode.com/problems/top-k-frequent-elements/">347 Top K Frequent</a></td></tr>
+<tr><td>3. Greedy simulation</td><td>Justifying the extreme-first move</td><td><a href="https://leetcode.com/problems/last-stone-weight/">1046 Last Stone Weight</a>; <a href="https://leetcode.com/problems/minimum-cost-to-connect-sticks/">1167 Connect Sticks</a></td></tr>
+<tr><td>4. Merge pattern</td><td>k-way merge, tuple keys</td><td><a href="https://leetcode.com/problems/merge-k-sorted-lists/">23 Merge k Sorted Lists</a>; <a href="https://leetcode.com/problems/ugly-number-ii/">264 Ugly Number II</a></td></tr>
+<tr><td>5. Scheduling</td><td>Priority + cooldown loops</td><td><a href="https://leetcode.com/problems/task-scheduler/">621 Task Scheduler</a>; <a href="https://leetcode.com/problems/reorganize-string/">767 Reorganize String</a></td></tr>
+<tr><td>6. Advanced</td><td>Two heaps, heap + other structures</td><td><a href="https://leetcode.com/problems/find-median-from-data-stream/">295 Find Median from Data Stream</a>; <a href="https://leetcode.com/problems/ipo/">502 IPO</a>; <a href="https://leetcode.com/problems/sliding-window-median/">480 Sliding Window Median</a></td></tr>
+</tbody></table>
+
+<h2>7. Interview checklist</h2>
+<ol>
+<li><strong>Direction:</strong> k largest → min-heap; k smallest → max-heap. Did I get this backwards?</li>
+<li><strong>Key:</strong> What is the heap actually ordered by — value, distance, frequency, priority? Tuples need a tiebreaker.</li>
+<li><strong>Comparability:</strong> Can Python compare my elements? If not, add an index or id to the tuple.</li>
+<li><strong>Size:</strong> Is the heap bounded (size k, <code>O(n log k)</code>) or unbounded (<code>O(n log n)</code>)?</li>
+<li><strong>Max-heap:</strong> Did I remember <code>heapq</code> is min-only — am I negating on push <em>and</em> pop, and negating peeks?</li>
+<li><strong>Greedy proof:</strong> Can I justify why taking the extreme now is safe, not just code the loop?</li>
+<li><strong>Complexity:</strong> Am I quoting <code>O(log n)</code> per operation and <code>O(n)</code> for heapify?</li>
+<li><strong>Edge cases:</strong> Empty stream, k ≥ n, ties everywhere, all-equal elements, single element.</li>
+</ol>
+
+<h2>8. First practice problem — LeetCode 215</h2>
+<p><strong><a href="https://leetcode.com/problems/kth-largest-element-in-an-array/">Kth Largest Element in an Array</a></strong></p>
+<p>Given an integer array <code>nums</code> and an integer <code>k</code>, return the kth largest element. Note: it is the kth largest <em>in sorted order</em>, not the kth distinct element.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 280" role="img" aria-label="Min-heap of the three largest values 7, 5, 6 built from input 3, 2, 1, 5, 6, 4; root 5 is the kth largest for k 3">
+<g stroke="#8ca0b8" stroke-width="3" fill="none"><path d="M300 54 L180 116 M300 54 L420 116"/></g>
+<g font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle"><g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><circle cx="300" cy="38" r="25"/><circle cx="180" cy="130" r="25"/><circle cx="420" cy="130" r="25"/></g><g fill="#182230"><text x="300" y="38">5</text><text x="180" y="130">7</text><text x="420" y="130">6</text></g></g>
+</svg><figcaption>After scanning <code>[3, 2, 1, 5, 6, 4]</code> with k = 3, the size-3 min-heap holds <code>{5, 6, 7}</code>. Its root, 5, is the smallest of the three largest — the answer.</figcaption>
+</figure>
+<p>Three honest approaches, in increasing sophistication: sort and index (<code>O(n log n)</code>), heapify and pop k−1 times (<code>O(n + k log n)</code>), or maintain a size-k min-heap (<code>O(n log k)</code>). The size-k heap is the pattern interviewers want to see.</p>
+<div class="callout"><strong>Invariant:</strong> after processing each element, the heap contains the k largest elements seen so far, and its root is the smallest of them — i.e., the current kth largest.</div>
+<pre><code>class Solution:
+    def findKthLargest(self, nums: list[int], k: int) -&gt; int:
+        # Your code here
+        pass</code></pre>
+<details><summary>Reveal the solution after trying it yourself</summary>
+<pre><code>import heapq
+
+class Solution:
+    def findKthLargest(self, nums: list[int], k: int) -&gt; int:
+        heap = []
+        for num in nums:
+            heapq.heappush(heap, num)
+            if len(heap) &gt; k:
+                heapq.heappop(heap)
+        return heap[0]</code></pre>
+<p><strong>Time:</strong> <code>O(n log k)</code> — each of the n elements costs at most <code>O(log k)</code> to push and possibly evict. <strong>Space:</strong> <code>O(k)</code>.</p>
+<p><strong>Follow-up the interviewer will ask:</strong> can you do better than <code>O(n log k)</code>? The expected answer is <em>quickselect</em> — partition around a pivot like quicksort but recurse into only one side, for average <code>O(n)</code> time. Know that it exists and its worst case is <code>O(n²)</code>; implementing it is a bonus, not a requirement at mid-level.</p>
+</details>
+<h3>Practice prompts</h3>
+<ol>
+<li>Why a <em>min</em>-heap for the kth <em>largest</em> — what would go wrong with a max-heap of size k?</li>
+<li>Why is <code>heap[0]</code> the answer at the end — which invariant guarantees it?</li>
+<li>How does this generalize to &quot;k most frequent elements&quot; — what becomes the heap's key?</li>
+</ol>
+<p>Try writing the solution from memory, then explain the invariant, the eviction rule, and the complexity aloud as you would in an interview.</p>
+
+<footer><p><strong>Suggested workflow:</strong> solve each problem yourself first, explain your approach aloud, then compare with a clean solution. Focus on recognizing the pattern rather than memorizing code. Next in the series: <a href="index.html">Back to the index</a>.</p></footer>
+</main></body></html>
+
+
+
+

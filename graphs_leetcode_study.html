@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graphs for LeetCode — SDE Interview Study Guide</title>
+<style>
+:root{color-scheme:light;--ink:#182230;--muted:#526174;--line:#d9e1ea;--panel:#f5f8fc;--accent:#2459a9;--code:#101827}
+*{box-sizing:border-box}body{margin:0;background:#eef2f7;color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;background:#fff;padding:clamp(22px,5vw,60px);box-shadow:0 8px 35px #1d2a3a12}
+h1,h2,h3{line-height:1.25;letter-spacing:-.02em}h1{font-size:clamp(2rem,5vw,3rem);margin:.25em 0}h2{margin-top:2.1em;border-bottom:1px solid var(--line);padding-bottom:.4em}h3{margin-top:1.5em}p,li{max-width:78ch} .eyebrow{color:var(--accent);font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:.78rem}
+.lead{font-size:1.15rem;color:var(--muted)}.meta{color:var(--muted);font-size:.9rem}
+.callout{padding:16px 20px;border-left:4px solid var(--accent);background:var(--panel);border-radius:6px;margin:20px 0}
+figure{margin:24px auto;text-align:center}figure svg{width:min(100%,620px);height:auto}figcaption{font-size:.9rem;color:var(--muted);margin-top:8px}
+pre{overflow:auto;background:var(--code);color:#f3f6fb;padding:18px;border-radius:10px;line-height:1.55;font-size:.91rem}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}p code,li code,td code{background:#eef2f7;color:#24354b;padding:.1em .32em;border-radius:4px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.94rem}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--panel)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:10px;padding:16px}.card h3{margin-top:0}
+.small{font-size:.92rem;color:var(--muted)}.pill{display:inline-block;border:1px solid var(--line);padding:3px 9px;border-radius:999px;font-size:.8rem;margin:3px}
+details{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0}summary{cursor:pointer;font-weight:700}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
+@media print{body{background:white}main{box-shadow:none;max-width:none;padding:0}.card,pre,figure,table{break-inside:avoid}details{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<p class="eyebrow">Interview preparation · Python · LeetCode</p>
+<h1>Graphs: From Fundamentals to Medium &amp; Hard</h1>
+<p class="lead">A practical, NeetCode-inspired study guide for SDE mid-level interviews. Learn how graphs are represented, when BFS or DFS applies, and build toward the recurring patterns behind graph problems.</p>
+<p class="meta">Includes embedded diagrams, Python examples, complexity analysis, a study roadmap, and your first practice problem. This file is self-contained and works offline. Companion guide: <a href="binary_trees_leetcode_study.html">Binary Trees</a>.</p>
+
+<h2>1. What is a graph?</h2>
+<p>A <strong>graph</strong> is a set of <strong>nodes</strong> (vertices) connected by <strong>edges</strong>. Unlike a tree, a graph has no designated root and may contain <strong>cycles</strong> — a tree is just a special kind of graph: connected and acyclic.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" role="img" aria-label="Undirected graph with five nodes 0 to 4 and edges between them">
+<g stroke="#8ca0b8" stroke-width="3" fill="none"><path d="M140 90 L300 50 M140 90 L120 190 M140 90 L300 230 M300 50 L460 100 M460 100 L300 230 M300 50 L300 230 M120 190 L300 230"/></g>
+<g font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle"><g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><circle cx="140" cy="90" r="25"/><circle cx="300" cy="50" r="25"/><circle cx="460" cy="100" r="25"/><circle cx="120" cy="190" r="25"/><circle cx="300" cy="230" r="25"/></g><g fill="#182230"><text x="140" y="90">0</text><text x="300" y="50">1</text><text x="460" y="100">2</text><text x="120" y="190">3</text><text x="300" y="230">4</text></g></g>
+</svg><figcaption>An undirected graph with 5 nodes. Node 0 has neighbors 1, 3, and 4. There is a cycle through nodes 1 and 4.</figcaption>
+</figure>
+<ul>
+<li><strong>Undirected vs. directed:</strong> an undirected edge works both ways; a directed edge (drawn with an arrow) has a direction, e.g. course prerequisites.</li>
+<li><strong>Neighbor / adjacency:</strong> nodes directly connected by an edge.</li>
+<li><strong>Degree:</strong> the number of edges touching a node (for directed graphs, split into in-degree and out-degree).</li>
+<li><strong>Path:</strong> a sequence of nodes connected by edges. A <strong>shortest path</strong> has the fewest edges (or lowest total weight).</li>
+<li><strong>Cycle:</strong> a path that starts and ends at the same node.</li>
+<li><strong>Connected component:</strong> a maximal group of nodes where every pair is reachable from the other.</li>
+<li><strong>Weighted graph:</strong> each edge carries a cost, such as distance or time.</li>
+</ul>
+
+<h2>2. Representing a graph in Python</h2>
+<p>LeetCode usually passes an edge list, a grid, or a node object. You convert it to an <strong>adjacency list</strong> — a dictionary mapping each node to its neighbors. This is the workhorse representation.</p>
+<pre><code>from collections import defaultdict
+
+edges = [[0, 1], [0, 3], [0, 4], [1, 2], [1, 4], [2, 4]]
+
+def build_graph(edges, n):
+    graph = defaultdict(list)
+    for u, v in edges:
+        graph[u].append(v)
+        graph[v].append(u)   # remove for a directed graph
+    return graph</code></pre>
+<p>For a weighted graph, store pairs:</p>
+<pre><code>graph[u].append((v, weight))</code></pre>
+<p>Other representations and when they matter:</p>
+<table><thead><tr><th>Representation</th><th>Space</th><th>Check an edge</th><th>Best for</th></tr></thead><tbody>
+<tr><td>Adjacency list</td><td><code>O(V + E)</code></td><td><code>O(degree)</code></td><td>Almost everything on LeetCode — sparse graphs, BFS/DFS</td></tr>
+<tr><td>Adjacency matrix</td><td><code>O(V²)</code></td><td><code>O(1)</code></td><td>Dense graphs, small <code>n</code> (e.g. Floyd–Warshall)</td></tr>
+<tr><td>Edge list</td><td><code>O(E)</code></td><td><code>O(E)</code></td><td>Input format; sorting edges (Kruskal-style)</td></tr>
+<tr><td>Grid (implicit graph)</td><td><code>O(rows·cols)</code></td><td>Neighbor arithmetic</td><td>Islands, mazes, spread problems — cells are nodes</td></tr>
+</tbody></table>
+<div class="callout"><strong>Node-object form:</strong> some problems (like clone graph, 133) give you a <code>Node</code> with <code>node.neighbors</code>. Treat it exactly like an adjacency list: iterate <code>node.neighbors</code>, and keep a visited set or map.</div>
+
+<h2>3. Graph vs. tree vs. other structures</h2>
+<div class="grid">
+<div class="card"><h3>Tree</h3><p>Connected, acyclic, <code>n − 1</code> edges, one path between any two nodes. Recursion on subtrees works because there are no cycles.</p><p class="small"><strong>Useful for:</strong> hierarchies, ordered data (BST), expression parsing.</p></div>
+<div class="card"><h3>Graph</h3><p>Arbitrary connections, may be cyclic and disconnected. Requires a <code>visited</code> set to avoid infinite loops.</p><p class="small"><strong>Useful for:</strong> networks, dependencies, reachability, shortest paths.</p></div>
+<div class="card"><h3>Grid as graph</h3><p>A 2D matrix where each cell is a node adjacent to its up/down/left/right neighbors. No explicit edges needed.</p><p class="small"><strong>Useful for:</strong> islands, flooding, rotting spread, maze problems.</p></div>
+</div>
+<p>The single biggest practical difference from trees: <strong>graphs can revisit nodes</strong>, so every traversal needs a <code>visited</code> set (or marking cells in place). Forgetting it is the most common source of infinite loops.</p>
+
+<h2>4. When should you use BFS vs. DFS?</h2>
+<p>Both visit every reachable node in <code>O(V + E)</code>. The choice depends on what the question asks for.</p>
+<table><thead><tr><th>Signal in the prompt</th><th>Choose</th><th>Why</th></tr></thead><tbody>
+<tr><td>&quot;Shortest path&quot;, &quot;minimum steps&quot;, &quot;nearest node&quot; (unweighted)</td><td>BFS</td><td>BFS explores in rings of increasing distance, so the first time you reach a node is via a shortest path</td></tr>
+<tr><td>&quot;Level by level&quot;, spread over time (rotting oranges)</td><td>BFS</td><td>A deque processes nodes in distance order, one &quot;layer&quot; per step</td></tr>
+<tr><td>&quot;Can you reach…&quot;, &quot;count islands/components&quot;, &quot;all paths&quot;</td><td>DFS</td><td>Reachability doesn't care about distance; DFS is shorter to write, recursively</td></tr>
+<tr><td>&quot;Order tasks by dependencies&quot;, &quot;prerequisites&quot;</td><td>Topological sort</td><td>Directed acyclic graphs define a valid processing order</td></tr>
+<tr><td>&quot;Connected if…&quot;, union/merge groups dynamically</td><td>Union-Find</td><td>Incremental grouping without rebuilding the graph</td></tr>
+<tr><td>&quot;Shortest path with weights&quot;</td><td>Dijkstra</td><td>BFS alone is wrong when edges have different costs</td></tr>
+</tbody></table>
+
+<h2>5. Four core interview patterns</h2>
+<h3>Pattern 1 — BFS (level-by-level with a queue)</h3>
+<p>The template is the same one from tree level-order traversal, plus a <code>visited</code> set. Track distance by processing one level at a time or by storing <code>(node, dist)</code> pairs.</p>
+<pre><code>from collections import deque
+
+def bfs(graph, start):
+    visited = {start}
+    queue = deque([(start, 0)])
+
+    while queue:
+        node, dist = queue.popleft()
+        # process node at distance `dist`
+        for nei in graph[node]:
+            if nei not in visited:
+                visited.add(nei)
+                queue.append((nei, dist + 1))</code></pre>
+<p><strong>Time:</strong> <code>O(V + E)</code>. <strong>Space:</strong> <code>O(V)</code>. Mark nodes visited <em>when enqueuing</em>, not when dequeuing, or the queue can blow up with duplicates. Common problems: <a href="https://leetcode.com/problems/shortest-path-in-binary-matrix/">Shortest Path in Binary Matrix (1091)</a>, <a href="https://leetcode.com/problems/rotting-oranges/">Rotting Oranges (994)</a>, <a href="https://leetcode.com/problems/word-ladder/">Word Ladder (127)</a>, <a href="https://leetcode.com/problems/clone-graph/">Clone Graph (133)</a>.</p>
+
+<h3>Pattern 2 — DFS (and counting components)</h3>
+<p>Recursion works exactly as in trees; the only addition is a <code>visited</code> set checked before recursing. Counting connected components = count how many DFS sweeps you launch.</p>
+<pre><code>def dfs(node, graph, visited):
+    visited.add(node)
+    for nei in graph[node]:
+        if nei not in visited:
+            dfs(nei, graph, visited)
+
+def count_components(n, edges):
+    graph = build_graph(edges, n)
+    visited = set()
+    count = 0
+    for node in range(n):
+        if node not in visited:
+            dfs(node, graph, visited)
+            count += 1
+    return count</code></pre>
+<p><strong>Time:</strong> <code>O(V + E)</code>. <strong>Space:</strong> <code>O(V)</code> plus recursion depth — Python's default recursion limit (~1000) matters, so for large graphs convert to an explicit stack. Common problems: <a href="https://leetcode.com/problems/number-of-islands/">Number of Islands (200)</a>, <a href="https://leetcode.com/problems/number-of-provinces/">Number of Provinces (547)</a>, <a href="https://leetcode.com/problems/all-paths-from-source-to-target/">All Paths from Source to Target (797)</a>.</p>
+
+<h3>Pattern 3 — Grids as graphs</h3>
+<p>A cell <code>(r, c)</code> is a node; its neighbors are the four directions. A small directions list keeps code clean:</p>
+<pre><code>directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+
+def neighbors(r, c, rows, cols):
+    for dr, dc in directions:
+        nr, nc = r + dr, c + dc
+        if 0 &lt;= nr &lt; rows and 0 &lt;= nc &lt; cols:
+            yield nr, nc</code></pre>
+<p>Instead of a <code>visited</code> set, you often mutate the grid in place (e.g. sink visited land by setting it to <code>&quot;0&quot;</code>). This is the same BFS/DFS machinery — grids just hide the graph. Common problems: <a href="https://leetcode.com/problems/number-of-islands/">Number of Islands (200)</a>, <a href="https://leetcode.com/problems/max-area-of-island/">Max Area of Island (695)</a>, <a href="https://leetcode.com/problems/pacific-atlantic-water-flow/">Pacific Atlantic Water Flow (417)</a>, <a href="https://leetcode.com/problems/surrounded-regions/">Surrounded Regions (130)</a>.</p>
+
+<h3>Pattern 4 — Topological sort (directed, acyclic)</h3>
+<p>When a problem is about <strong>dependencies</strong> — courses, build order, tasks — model it as a directed graph and produce an order where every node comes after its prerequisites. Kahn's algorithm (BFS with in-degrees) is the interview-friendly version:</p>
+<pre><code>from collections import deque
+
+def topo_sort(num_nodes, edges):
+    graph = defaultdict(list)
+    indegree = [0] * num_nodes
+    for u, v in edges:          # u depends on v, or vice versa — read carefully!
+        graph[v].append(u)
+        indegree[u] += 1
+
+    queue = deque(i for i in range(num_nodes) if indegree[i] == 0)
+    order = []
+
+    while queue:
+        node = queue.popleft()
+        order.append(node)
+        for nei in graph[node]:
+            indegree[nei] -= 1
+            if indegree[nei] == 0:
+                queue.append(nei)
+
+    return order if len(order) == num_nodes else []  # [] means a cycle</code></pre>
+<div class="callout"><strong>Edge direction is the #1 trap.</strong> For &quot;[a, b] means b must come before a&quot;, add the edge from b to a and increment a's in-degree. Getting it backwards silently fails on cycle detection.</div>
+<p><strong>Time:</strong> <code>O(V + E)</code>. If the order has fewer than <code>num_nodes</code> nodes, a cycle exists — that's how you detect impossibility. Common problems: <a href="https://leetcode.com/problems/course-schedule/">Course Schedule (207)</a>, <a href="https://leetcode.com/problems/course-schedule-ii/">Course Schedule II (210)</a>, <a href="https://leetcode.com/problems/alien-dictionary/">Alien Dictionary (269)</a>.</p>
+
+<h2>6. Two tools to recognize (not master yet)</h2>
+<h3>Union-Find (Disjoint Set Union)</h3>
+<p>When edges arrive incrementally and the question is &quot;are these connected?&quot; or &quot;how many groups?&quot;, Union-Find merges sets in near-constant amortized time. Know that it exists and what it looks like:</p>
+<pre><code>class UnionFind:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.rank = [0] * n
+        self.count = n
+
+    def find(self, x):
+        while self.parent[x] != x:
+            self.parent[x] = self.parent[self.parent[x]]  # path compression
+            x = self.parent[x]
+        return x
+
+    def union(self, a, b):
+        ra, rb = self.find(a), self.find(b)
+        if ra == rb:
+            return False
+        if self.rank[ra] &lt; self.rank[rb]:
+            ra, rb = rb, ra
+        self.parent[rb] = ra
+        if self.rank[ra] == self.rank[rb]:
+            self.rank[ra] += 1
+        self.count -= 1
+        return True</code></pre>
+<p>Common problems: <a href="https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/">Number of Connected Components (323)</a>, <a href="https://leetcode.com/problems/redundant-connection/">Redundant Connection (684)</a>, <a href="https://leetcode.com/problems/accounts-merge/">Accounts Merge (721)</a>.</p>
+
+<h3>Dijkstra (weighted shortest path)</h3>
+<p>Dijkstra is BFS with a <strong>min-heap instead of a queue</strong>: always expand the cheapest known node next. Uses <code>heapq</code> — see the companion guide <a href="heaps_priority_queues_leetcode_study.html">Heaps &amp; Priority Queues</a>.</p>
+<pre><code>import heapq
+
+def dijkstra(graph, start):
+    dist = {start: 0}
+    heap = [(0, start)]
+
+    while heap:
+        d, node = heapq.heappop(heap)
+        if d &gt; dist[node]:          # stale entry, skip
+            continue
+        for nei, w in graph[node]:
+            nd = d + w
+            if nd &lt; dist.get(nei, float('inf')):
+                dist[nei] = nd
+                heapq.heappush(heap, (nd, nei))
+    return dist</code></pre>
+<p><strong>Time:</strong> <code>O((V + E) log V)</code>. Non-negative weights only. Common problems: <a href="https://leetcode.com/problems/network-delay-time/">Network Delay Time (743)</a>, <a href="https://leetcode.com/problems/cheapest-flights-within-k-stops/">Cheapest Flights Within K Stops (787, which needs a variant)</a>, <a href="https://leetcode.com/problems/path-with-minimum-effort/">Path with Minimum Effort (1631)</a>.</p>
+
+<h2>7. Study roadmap</h2>
+<table><thead><tr><th>Stage</th><th>Focus</th><th>Representative LeetCode problems</th></tr></thead><tbody>
+<tr><td>1. Foundations</td><td>Adjacency list, visited set</td><td><a href="https://leetcode.com/problems/find-if-path-exists-in-graph/">1971 Find if Path Exists</a>; <a href="https://leetcode.com/problems/clone-graph/">133 Clone Graph</a></td></tr>
+<tr><td>2. DFS &amp; components</td><td>Component counting, recursion</td><td><a href="https://leetcode.com/problems/number-of-islands/">200 Number of Islands</a>; <a href="https://leetcode.com/problems/number-of-provinces/">547 Number of Provinces</a>; <a href="https://leetcode.com/problems/max-area-of-island/">695 Max Area of Island</a></td></tr>
+<tr><td>3. BFS</td><td>Queues, levels, shortest unweighted path</td><td><a href="https://leetcode.com/problems/shortest-path-in-binary-matrix/">1091 Shortest Path Binary Matrix</a>; <a href="https://leetcode.com/problems/rotting-oranges/">994 Rotting Oranges</a></td></tr>
+<tr><td>4. Topological sort</td><td>In-degrees, cycle detection</td><td><a href="https://leetcode.com/problems/course-schedule/">207 Course Schedule</a>; <a href="https://leetcode.com/problems/course-schedule-ii/">210 Course Schedule II</a></td></tr>
+<tr><td>5. Union-Find</td><td>Parent/rank, dynamic connectivity</td><td><a href="https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/">323 Connected Components</a>; <a href="https://leetcode.com/problems/redundant-connection/">684 Redundant Connection</a></td></tr>
+<tr><td>6. Weighted graphs</td><td>Heaps, Dijkstra</td><td><a href="https://leetcode.com/problems/network-delay-time/">743 Network Delay Time</a>; <a href="https://leetcode.com/problems/path-with-minimum-effort/">1631 Path with Minimum Effort</a></td></tr>
+<tr><td>7. Hard</td><td>Multi-source BFS, state search</td><td><a href="https://leetcode.com/problems/word-ladder/">127 Word Ladder</a>; <a href="https://leetcode.com/problems/alien-dictionary/">269 Alien Dictionary</a>; <a href="https://leetcode.com/problems/bus-routes/">815 Bus Routes</a></td></tr>
+</tbody></table>
+
+<h2>8. Interview checklist</h2>
+<ol>
+<li><strong>Direction:</strong> Is the graph directed or undirected? Which way does each input edge point?</li>
+<li><strong>Representation:</strong> Edge list, grid, or node objects? Build the adjacency list up front.</li>
+<li><strong>Visited:</strong> Where is my <code>visited</code> set (or in-place marking)? Can a node be enqueued twice?</li>
+<li><strong>Disconnection:</strong> Can nodes be unreachable? Do I need to loop over all nodes, or start from one?</li>
+<li><strong>Distances:</strong> Unweighted → BFS. Weighted, non-negative → Dijkstra. Anything else is a red flag.</li>
+<li><strong>Cycles:</strong> For directed graphs, is detecting a cycle part of the answer (course schedule)?</li>
+<li><strong>Recursion depth:</strong> Is <code>n</code> large enough that DFS recursion could hit Python's limit?</li>
+<li><strong>Edge cases:</strong> Empty graph, single node, self-loops, duplicate edges, disconnected input.</li>
+</ol>
+
+<h2>9. First practice problem — LeetCode 200</h2>
+<p><strong><a href="https://leetcode.com/problems/number-of-islands/">Number of Islands</a></strong></p>
+<p>Given an <code>m x n</code> grid of <code>&#39;1&#39;</code>s (land) and <code>&#39;0&#39;</code>s (water), return the number of islands. An island is a group of land cells connected horizontally or vertically.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 260" role="img" aria-label="A 3 by 5 grid of cells where two clusters of land cells form two islands">
+<g stroke="#8ca0b8" stroke-width="1.5" fill="none">
+<path d="M80 20 H480 M80 80 H480 M80 140 H480 M80 200 H480 M80 20 V200 M160 20 V200 M240 20 V200 M320 20 V200 M400 20 V200 M480 20 V200"/>
+</g>
+<g font-family="system-ui,sans-serif" font-size="22" text-anchor="middle" dominant-baseline="middle">
+<g fill="#d8ecdc" stroke="#3f9d63"><rect x="82" y="22" width="76" height="56" rx="6"/><rect x="162" y="22" width="76" height="56" rx="6"/><rect x="162" y="82" width="76" height="56" rx="6"/><rect x="322" y="142" width="76" height="56" rx="6"/><rect x="402" y="142" width="76" height="56" rx="6"/><rect x="402" y="82" width="76" height="56" rx="6"/></g>
+<g fill="#eef2f7" stroke="#c3cfdb"><rect x="242" y="22" width="76" height="56" rx="6"/><rect x="322" y="22" width="76" height="56" rx="6"/><rect x="402" y="22" width="76" height="56" rx="6"/><rect x="82" y="82" width="76" height="56" rx="6"/><rect x="242" y="82" width="76" height="56" rx="6"/><rect x="322" y="82" width="76" height="56" rx="6"/><rect x="82" y="142" width="76" height="56" rx="6"/><rect x="162" y="142" width="76" height="56" rx="6"/><rect x="242" y="142" width="76" height="56" rx="6"/></g>
+<g fill="#182230"><text x="120" y="50">1</text><text x="200" y="50">1</text><text x="200" y="110">1</text><text x="360" y="170">1</text><text x="440" y="170">1</text><text x="440" y="110">1</text></g>
+<g fill="#8a97a5"><text x="280" y="50">0</text><text x="360" y="50">0</text><text x="440" y="50">0</text><text x="120" y="110">0</text><text x="280" y="110">0</text><text x="360" y="110">0</text><text x="120" y="170">0</text><text x="200" y="170">0</text><text x="280" y="170">0</text></g>
+</g>
+</svg><figcaption>Two land clusters that touch only diagonally count as separate islands. Output: <code>2</code></figcaption>
+</figure>
+<p>Every land cell belongs to exactly one island. So: scan the grid; each time you find an unvisited land cell, that's a new island — flood-fill (DFS or BFS) from it, marking everything reachable.</p>
+<div class="callout"><strong>Recurrence:</strong> <code>islands(grid) =</code> number of times a fresh <code>&#39;1&#39;</code> is found during the scan. Each flood-fill marks one whole island so it is never counted twice.</div>
+<pre><code>class Solution:
+    def numIslands(self, grid: list[list[str]]) -&gt; int:
+        # Your code here
+        pass</code></pre>
+<details><summary>Reveal the solution after trying it yourself</summary>
+<pre><code>class Solution:
+    def numIslands(self, grid: list[list[str]]) -&gt; int:
+        if not grid:
+            return 0
+
+        rows, cols = len(grid), len(grid[0])
+
+        def sink(r, c):
+            if r &lt; 0 or r &gt;= rows or c &lt; 0 or c &gt;= cols:
+                return
+            if grid[r][c] != &#39;1&#39;:
+                return
+            grid[r][c] = &#39;0&#39;   # mark visited in place
+            sink(r + 1, c)
+            sink(r - 1, c)
+            sink(r, c + 1)
+            sink(r, c - 1)
+
+        count = 0
+        for r in range(rows):
+            for c in range(cols):
+                if grid[r][c] == &#39;1&#39;:
+                    sink(r, c)
+                    count += 1
+        return count</code></pre>
+<p><strong>Time:</strong> <code>O(rows · cols)</code> — each cell is visited at most a constant number of times. <strong>Space:</strong> <code>O(rows · cols)</code> worst case for the recursion stack (a grid that is all land). For very large grids, replace the recursion with an explicit stack or a BFS deque.</p>
+</details>
+<h3>Practice prompts</h3>
+<ol>
+<li>Why does mutating the grid replace the need for a <code>visited</code> set?</li>
+<li>What happens to the count if two islands touch diagonally — why?</li>
+<li>How would you convert the recursive DFS to BFS with a deque, and when would you prefer that?</li>
+</ol>
+<p>Try writing the solution from memory, then explain the scan, the flood fill, and the complexity aloud as you would in an interview.</p>
+
+<footer><p><strong>Suggested workflow:</strong> solve each problem yourself first, explain your approach aloud, then compare with a clean solution. Focus on recognizing the pattern rather than memorizing code. Next in the series: <a href="binary_search_trees_leetcode_study.html">Binary Search Trees</a> · <a href="heaps_priority_queues_leetcode_study.html">Heaps &amp; Priority Queues</a>.</p></footer>
+</main></body></html>
+
+
+
+

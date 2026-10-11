@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dynamic Programming for LeetCode — SDE Interview Study Guide</title>
+<style>
+:root{color-scheme:light;--ink:#182230;--muted:#526174;--line:#d9e1ea;--panel:#f5f8fc;--accent:#2459a9;--code:#101827}
+*{box-sizing:border-box}body{margin:0;background:#eef2f7;color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;background:#fff;padding:clamp(22px,5vw,60px);box-shadow:0 8px 35px #1d2a3a12}
+h1,h2,h3{line-height:1.25;letter-spacing:-.02em}h1{font-size:clamp(2rem,5vw,3rem);margin:.25em 0}h2{margin-top:2.1em;border-bottom:1px solid var(--line);padding-bottom:.4em}h3{margin-top:1.5em}p,li{max-width:78ch} .eyebrow{color:var(--accent);font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:.78rem}
+.lead{font-size:1.15rem;color:var(--muted)}.meta{color:var(--muted);font-size:.9rem}
+.callout{padding:16px 20px;border-left:4px solid var(--accent);background:var(--panel);border-radius:6px;margin:20px 0}
+figure{margin:24px auto;text-align:center}figure svg{width:min(100%,620px);height:auto}figcaption{font-size:.9rem;color:var(--muted);margin-top:8px}
+pre{overflow:auto;background:var(--code);color:#f3f6fb;padding:18px;border-radius:10px;line-height:1.55;font-size:.91rem}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}p code,li code,td code{background:#eef2f7;color:#24354b;padding:.1em .32em;border-radius:4px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.94rem}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--panel)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:10px;padding:16px}.card h3{margin-top:0}
+.small{font-size:.92rem;color:var(--muted)}.pill{display:inline-block;border:1px solid var(--line);padding:3px 9px;border-radius:999px;font-size:.8rem;margin:3px}
+details{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0}summary{cursor:pointer;font-weight:700}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
+@media print{body{background:white}main{box-shadow:none;max-width:none;padding:0}.card,pre,figure,table{break-inside:avoid}details{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<p class="eyebrow">Interview preparation · Python · LeetCode</p>
+<h1>Dynamic Programming: From Fundamentals to Medium &amp; Hard</h1>
+<p class="lead">A practical, NeetCode-inspired study guide for SDE mid-level interviews. Dynamic programming is recursion with a memory — learn to spot it, write the recurrence, and choose between top-down and bottom-up.</p>
+<p class="meta">Includes embedded diagrams, Python examples, complexity analysis, a study roadmap, and your first practice problem. This file is self-contained and works offline. Companion guide: <a href="binary_trees_leetcode_study.html">Binary Trees</a> (recursion fundamentals).</p>
+
+<h2>1. What is dynamic programming?</h2>
+<p><strong>Dynamic programming (DP)</strong> is a technique for problems whose answers decompose into <em>overlapping subproblems</em>: the same smaller subproblem shows up many times, and each subproblem's answer only depends on answers to even smaller ones. DP solves each distinct subproblem <strong>once</strong>, stores the result, and reuses it.</p>
+<p>The classic demonstration is Fibonacci. Naive recursion recomputes the same values exponentially many times:</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 280" role="img" aria-label="Recursion tree for fib 5: fib 5 calls fib 4 and fib 3; fib 4 calls fib 3 and fib 2; fib 3 calls fib 2 and fib 1; repeated subproblems fib 3 and fib 2 are highlighted">
+<g stroke="#8ca0b8" stroke-width="3" fill="none"><path d="M310 56 L190 114 M310 56 L430 114 M190 146 L120 204 M190 146 L260 204 M430 146 L370 204 M430 146 L500 204"/></g>
+<g font-family="system-ui,sans-serif" font-size="19" text-anchor="middle" dominant-baseline="middle">
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><circle cx="310" cy="40" r="25"/><circle cx="190" cy="130" r="25"/><circle cx="120" cy="220" r="25"/><circle cx="500" cy="220" r="25"/></g>
+<g fill="#fdf3e3" stroke="#c98a2b" stroke-dasharray="5 4" stroke-width="2"><circle cx="430" cy="130" r="25"/><circle cx="260" cy="220" r="25"/><circle cx="370" cy="220" r="25"/></g>
+<g fill="#182230"><text x="310" y="40">fib(5)</text><text x="190" y="130">fib(4)</text><text x="120" y="220">fib(3)</text><text x="500" y="220">fib(1)</text></g>
+<g fill="#8a5a1d"><text x="430" y="130">fib(3)</text><text x="260" y="220">fib(2)</text><text x="370" y="220">fib(2)</text></g>
+</g>
+</svg><figcaption>The recursion tree for <code>fib(5)</code>. Highlighted nodes are recomputation: <code>fib(3)</code> is solved twice, <code>fib(2)</code> twice — and the repeats multiply exponentially as <code>n</code> grows. Memoization collapses the tree to a straight line: each distinct subproblem solved once, <code>O(n)</code> total.</figcaption>
+</figure>
+<ul>
+<li><strong>Overlapping subproblems:</strong> the same states recur — that's what makes caching worthwhile.</li>
+<li><strong>Optimal substructure:</strong> the answer for a state is built from answers of smaller states — <code>ways(n)</code> from <code>ways(n−1)</code> and <code>ways(n−2)</code>.</li>
+<li><strong>State:</strong> the minimal description of a subproblem — &quot;max loot from the first <code>i</code> houses&quot;, &quot;ways to make amount <code>a</code> with coins so far&quot;. Choosing the state is the real design work.</li>
+<li><strong>Recurrence:</strong> the rule connecting a state to smaller states, plus <strong>base cases</strong>.</li>
+</ul>
+<div class="callout"><strong>The whole game is three questions:</strong> (1) What is a <em>state</em>? (2) What is the <em>recurrence</em> from smaller states? (3) What are the <em>base cases</em>? Everything else — memoization, tables, loops, space tricks — is bookkeeping.</div>
+
+<h2>2. Representing DP in Python</h2>
+<p>Two equivalent styles. <strong>Top-down (memoization)</strong> keeps the natural recursive formulation and caches results in a dict or array:</p>
+<pre><code>from functools import lru_cache
+
+def fib(n):
+    memo = {}
+
+    def helper(k):
+        if k &lt;= 1:
+            return k
+        if k in memo:
+            return memo[k]
+        memo[k] = helper(k - 1) + helper(k - 2)
+        return memo[k]
+
+    return helper(n)
+
+# or, for one-argument functions, in one line:
+@lru_cache(maxsize=None)
+def fib_cached(n):
+    return n if n &lt;= 1 else fib_cached(n - 1) + fib_cached(n - 2)</code></pre>
+<p><strong>Bottom-up (tabulation)</strong> fills a table from the base cases upward, in dependency order:</p>
+<pre><code>def fib(n):
+    if n &lt;= 1:
+        return n
+    dp = [0] * (n + 1)
+    dp[1] = 1
+    for i in range(2, n + 1):
+        dp[i] = dp[i - 1] + dp[i - 2]
+    return dp[n]</code></pre>
+<table><thead><tr><th>Aspect</th><th>Top-down (memoization)</th><th>Bottom-up (tabulation)</th></tr></thead><tbody>
+<tr><td>How to arrive at it</td><td>Natural: it's plain recursion plus a cache</td><td>Requires knowing a valid fill order</td></tr>
+<tr><td>Computes</td><td>Only states actually needed</td><td>Usually every state in the table</td></tr>
+<tr><td>Overhead</td><td>Recursion stack; Python's ~1000 depth limit</td><td>None — plain loops</td></tr>
+<tr><td>Space optimization</td><td>Hard (call graph dictates what's kept)</td><td>Easy: keep only the last row/couple of entries</td></tr>
+<tr><td>Interview use</td><td>Get a correct solution fast, then say &quot;this can be flattened bottom-up&quot;</td><td>The polish step — and required when <code>n</code> is large</td></tr>
+</tbody></table>
+<p>Both have identical time complexity. In interviews, write whichever comes out first (usually top-down), state the recurrence aloud, then offer the bottom-up conversion — often with the space optimization, e.g. two variables instead of a full array for Fibonacci-style recurrences.</p>
+
+<h2>3. DP vs. recursion vs. greedy vs. BFS</h2>
+<div class="grid">
+<div class="card"><h3>Plain recursion</h3><p>Same recurrence, no cache. Correct but exponential when subproblems overlap heavily.</p><p class="small"><strong>Useful for:</strong> a first correct draft — then add the memo and watch the complexity collapse.</p></div>
+<div class="card"><h3>Greedy</h3><p>Takes the locally best move and never revisits. <code>O(n log n)</code> or better, but only correct when a local choice can't hurt the global optimum.</p><p class="small"><strong>Useful for:</strong> interval scheduling, jump game — but proving greedy-safety is hard. When you can't prove it, DP is the fallback.</p></div>
+<div class="card"><h3>BFS</h3><p>Explores states outward from a start. For unweighted state graphs, the first time you reach a state is optimal — that's DP on an implicit graph where every edge has equal weight.</p><p class="small"><strong>Useful for:</strong> shortest path in mazes, word ladders. See the <a href="graphs_leetcode_study.html">Graphs guide</a>.</p></div>
+</div>
+<p>A helpful reframe: <strong>DP is shortest-path/longest-path on a DAG of states.</strong> Each table cell is a node; edges point from a state to the states it depends on. Topological order of that DAG = your loop order. This is why DP works on problems like &quot;minimum edit distance&quot; but BFS is wrong for weighted or max-min objectives.</p>
+
+<h2>4. When should you use DP?</h2>
+<table><thead><tr><th>Signal in the prompt</th><th>Reads as</th><th>Typical problem</th></tr></thead><tbody>
+<tr><td>&quot;Count the number of ways…&quot;</td><td>Sum of ways from smaller states</td><td><a href="https://leetcode.com/problems/climbing-stairs/">70 Climbing Stairs</a>, <a href="https://leetcode.com/problems/unique-paths/">62 Unique Paths</a></td></tr>
+<tr><td>&quot;Minimum / maximum cost / value / length&quot; over choices</td><td>Best of options from smaller states</td><td><a href="https://leetcode.com/problems/coin-change/">322 Coin Change</a>, <a href="https://leetcode.com/problems/longest-common-subsequence/">1143 LCS</a></td></tr>
+<tr><td>&quot;Can you achieve exactly…?&quot; (true/false)</td><td>OR over reachable sub-states</td><td><a href="https://leetcode.com/problems/partition-equal-subset-sum/">416 Partition Equal Subset Sum</a></td></tr>
+<tr><td>Choices at each step <em>interact</em> (take/skip affects the future)</td><td>State must capture what the future needs to know</td><td><a href="https://leetcode.com/problems/house-robber/">198 House Robber</a>, <a href="https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/">309 Best Time with Cooldown</a></td></tr>
+<tr><td>Brute force over subsets/permutations is <code>2^n</code>/<code>n!</code> and <code>n</code> ≤ ~20</td><td>DP over the reachable state range (or bitmask DP), instead of enumerating</td><td><a href="https://leetcode.com/problems/target-sum/">494 Target Sum</a></td></tr>
+</tbody></table>
+<div class="callout"><strong>The anti-signs:</strong> if a locally best choice provably can't hurt (greedy), or the structure is an unweighted graph search (BFS), or there's no overlap between subproblems (plain divide &amp; conquer like merge sort), DP is the wrong tool. Overlapping subproblems are the entry fee.</div>
+
+<h2>5. Four core interview patterns</h2>
+<h3>Pattern 1 — Linear 1-D DP (decisions along a sequence)</h3>
+<p>State: <code>dp[i]</code> = answer for the first <code>i</code> items. The recurrence often has a small &quot;decision&quot;: at each step, take or skip.</p>
+<pre><code>def rob(nums):                # LeetCode 198: House Robber
+    take, skip = 0, 0         # max loot if we take / skip the previous house
+    for num in nums:
+        take, skip = skip + num, max(take, skip)
+    return max(take, skip)</code></pre>
+<p><code>dp[i] = max(dp[i−1], dp[i−2] + nums[i])</code> — rob this house (so the previous must be skipped) or don't. Two variables instead of an array, since the recurrence only looks back two steps: <code>O(n)</code> time, <code>O(1)</code> space. Common problems: <a href="https://leetcode.com/problems/climbing-stairs/">Climbing Stairs (70)</a>, <a href="https://leetcode.com/problems/house-robber/">House Robber (198)</a>, <a href="https://leetcode.com/problems/house-robber-ii/">House Robber II (213, circular version)</a>, <a href="https://leetcode.com/problems/min-cost-climbing-stairs/">Min Cost Climbing Stairs (746)</a>.</p>
+
+<h3>Pattern 2 — Grid 2-D DP</h3>
+<p>State: <code>dp[r][c]</code> = answer for the sub-grid ending at cell <code>(r, c)</code>. Fill row by row; each cell depends on its top and left neighbors.</p>
+<pre><code>def unique_paths(m, n):       # LeetCode 62
+    dp = [[1] * n for _ in range(m)]   # first row and column: exactly 1 way
+    for r in range(1, m):
+        for c in range(1, n):
+            dp[r][c] = dp[r - 1][c] + dp[r][c - 1]
+    return dp[m - 1][n - 1]</code></pre>
+<p><strong>Time:</strong> <code>O(m·n)</code> — proportional to the number of states, the universal DP cost rule. Common problems: <a href="https://leetcode.com/problems/unique-paths/">Unique Paths (62)</a>, <a href="https://leetcode.com/problems/minimum-path-sum/">Minimum Path Sum (64)</a>, <a href="https://leetcode.com/problems/maximal-square/">Maximal Square (221)</a>, <a href="https://leetcode.com/problems/dungeon-game/">Dungeon Game (174)</a>.</p>
+
+<h3>Pattern 3 — Knapsack: coin change and subset sums</h3>
+<p>State: <code>dp[a]</code> = the answer for capacity/amount <code>a</code>. Two flavors matter because the loop order changes:</p>
+<pre><code>def coin_change(coins, amount):    # LeetCode 322 — unbounded: reuse coins
+    dp = [float('inf')] * (amount + 1)
+    dp[0] = 0
+    for a in range(1, amount + 1):
+        for coin in coins:
+            if coin &lt;= a:
+                dp[a] = min(dp[a], dp[a - coin] + 1)
+    return dp[amount] if dp[amount] != float('inf') else -1
+
+def can_partition(nums):           # LeetCode 416 — 0/1: each coin used once
+    total = sum(nums)
+    if total % 2:
+        return False
+    dp = [False] * (total // 2 + 1)
+    dp[0] = True
+    for num in nums:
+        for a in range(total // 2, num - 1, -1):   # backwards = use once
+            dp[a] = dp[a] or dp[a - num]
+    return dp[total // 2]</code></pre>
+<div class="callout"><strong>The loop-order rule:</strong> unbounded knapsack iterates amounts <em>forward</em> (a coin may build on itself); 0/1 knapsack iterates <em>backwards</em> (so each item is used at most once). Interviewers specifically probe this distinction.</div>
+<p>Common problems: Coin Change (322), Partition Equal Subset Sum (416), Target Sum (494), Longest Common Subsequence's knapsack cousin — <a href="https://leetcode.com/problems/combination-sum-iv/">Combination Sum IV (377)</a>.</p>
+
+<h3>Pattern 4 — Two-sequence (string) DP</h3>
+<p>State: <code>dp[i][j]</code> = the answer for the first <code>i</code> characters of one string and the first <code>j</code> of another. The recurrence branches on whether the current characters match.</p>
+<pre><code>def longest_common_subsequence(a, b):    # LeetCode 1143
+    m, n = len(a), len(b)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if a[i - 1] == b[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1] + 1     # chars match — extend
+            else:
+                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])  # drop one
+    return dp[m][n]</code></pre>
+<p>The <code>(m+1) × (n+1)</code> table with an empty-prefix base row/column is a template worth memorizing — edit distance (72) is the same skeleton with <code>min</code> of three neighbors instead of <code>max</code> of two. <strong>Time:</strong> <code>O(m·n)</code>, <strong>space:</strong> <code>O(m·n)</code>, reducible to two rows. Common problems: <a href="https://leetcode.com/problems/longest-common-subsequence/">LCS (1143)</a>, <a href="https://leetcode.com/problems/edit-distance/">Edit Distance (72)</a>, <a href="https://leetcode.com/problems/distinct-subsequences/">Distinct Subsequences (115)</a>, <a href="https://leetcode.com/problems/longest-increasing-subsequence/">Longest Increasing Subsequence (300</a> — 1-D cousin, <code>O(n²)</code> DP or <code>O(n log n)</code> with binary search).</p>
+
+<h2>6. Study roadmap</h2>
+<table><thead><tr><th>Stage</th><th>Focus</th><th>Representative LeetCode problems</th></tr></thead><tbody>
+<tr><td>1. Foundations</td><td>Recurrence, base cases, memo vs. tab</td><td><a href="https://leetcode.com/problems/climbing-stairs/">70 Climbing Stairs</a>; <a href="https://leetcode.com/problems/fibonacci-number/">509 Fibonacci</a>; <a href="https://leetcode.com/problems/min-cost-climbing-stairs/">746 Min Cost Climbing Stairs</a></td></tr>
+<tr><td>2. Linear decisions</td><td>Take/skip, space optimization</td><td><a href="https://leetcode.com/problems/house-robber/">198 House Robber</a>; <a href="https://leetcode.com/problems/house-robber-ii/">213 House Robber II</a></td></tr>
+<tr><td>3. Grid DP</td><td>Top/left dependencies</td><td><a href="https://leetcode.com/problems/unique-paths/">62 Unique Paths</a>; <a href="https://leetcode.com/problems/minimum-path-sum/">64 Minimum Path Sum</a>; <a href="https://leetcode.com/problems/maximal-square/">221 Maximal Square</a></td></tr>
+<tr><td>4. Knapsack</td><td>Unbounded vs. 0/1, loop order</td><td><a href="https://leetcode.com/problems/coin-change/">322 Coin Change</a>; <a href="https://leetcode.com/problems/partition-equal-subset-sum/">416 Partition Equal Subset</a>; <a href="https://leetcode.com/problems/target-sum/">494 Target Sum</a></td></tr>
+<tr><td>5. Sequences</td><td>State along one array</td><td><a href="https://leetcode.com/problems/longest-increasing-subsequence/">300 Longest Increasing Subsequence</a>; <a href="https://leetcode.com/problems/maximum-product-subarray/">152 Maximum Product Subarray</a></td></tr>
+<tr><td>6. Two sequences</td><td>The (m+1)×(n+1) template</td><td><a href="https://leetcode.com/problems/longest-common-subsequence/">1143 LCS</a>; <a href="https://leetcode.com/problems/edit-distance/">72 Edit Distance</a>; <a href="https://leetcode.com/problems/distinct-subsequences/">115 Distinct Subsequences</a></td></tr>
+<tr><td>7. Hard</td><td>Multiple dimensions, state design</td><td><a href="https://leetcode.com/problems/word-break/">139 Word Break</a>; <a href="https://leetcode.com/problems/burst-balloons/">312 Burst Balloons</a>; <a href="https://leetcode.com/problems/regular-expression-matching/">10 Regular Expression Matching</a></td></tr>
+</tbody></table>
+
+<h2>7. Interview checklist</h2>
+<ol>
+<li><strong>State:</strong> Can I describe a subproblem in one sentence with indices? (&quot;the answer using the first <code>i</code> items and budget <code>a</code>&quot;)</li>
+<li><strong>Recurrence:</strong> Does the state depend only on <em>smaller</em> states? No cycles?</li>
+<li><strong>Base cases:</strong> What are the values for empty prefixes, zero capacity, the first row/column?</li>
+<li><strong>Direction of iteration:</strong> Am I filling in an order where dependencies are ready first? (Knapsack loop order!)</li>
+<li><strong>What the answer is:</strong> Is the final answer <code>dp[n]</code>, <code>dp[m][n]</code>, or <code>max(dp)</code> over all states?</li>
+<li><strong>Complexity:</strong> <code>O(number of states × work per state)</code> — can I state both factors?</li>
+<li><strong>Space optimization:</strong> Does the recurrence only look back one row or k entries? Say so unprompted.</li>
+<li><strong>Edge cases:</strong> Empty input, single element, impossible targets (<code>−1</code> or <code>False</code>), zeros and negatives in the input.</li>
+</ol>
+
+<h2>8. First practice problem — LeetCode 70</h2>
+<p><strong><a href="https://leetcode.com/problems/climbing-stairs/">Climbing Stairs</a></strong></p>
+<p>You are climbing a staircase with <code>n</code> steps. Each time you can climb either 1 or 2 steps. In how many distinct ways can you reach the top?</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 150" role="img" aria-label="DP table for climbing stairs: ways values 1, 1, 2, 3, 5, 8 for steps 0 through 5, each equal to the sum of the previous two">
+<g font-family="system-ui,sans-serif" font-size="19" text-anchor="middle" dominant-baseline="middle">
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><rect x="60" y="50" width="70" height="50" rx="8"/><rect x="140" y="50" width="70" height="50" rx="8"/><rect x="300" y="50" width="70" height="50" rx="8"/><rect x="380" y="50" width="70" height="50" rx="8"/><rect x="460" y="50" width="70" height="50" rx="8"/></g>
+<g fill="#fdf3e3" stroke="#c98a2b" stroke-width="2"><rect x="220" y="50" width="70" height="50" rx="8"/><rect x="540" y="50" width="50" height="50" rx="8"/></g>
+<g fill="#182230"><text x="95" y="75">1</text><text x="175" y="75">1</text><text x="335" y="75">3</text><text x="415" y="75">5</text><text x="495" y="75">8</text></g>
+<g fill="#8a5a1d"><text x="255" y="75">2</text><text x="565" y="75">13</text></g>
+<g fill="#526174" font-size="15"><text x="95" y="30">ways[0]</text><text x="175" y="30">ways[1]</text><text x="255" y="30">ways[2]</text><text x="335" y="30">ways[3]</text><text x="415" y="30">ways[4]</text><text x="495" y="30">ways[5]</text><text x="565" y="30">…</text></g>
+</g>
+</svg><figcaption>Tabulation in action: <code>ways[2] = 1 + 1 = 2</code>, <code>ways[3] = 2 + 1 = 3</code> … each cell is the sum of the two before it. <code>ways[5] = 8</code>.</figcaption>
+</figure>
+<p>To land on step <code>n</code>, your last move was a single step from <code>n−1</code> or a double step from <code>n−2</code> — two disjoint cases that cover everything:</p>
+<div class="callout"><strong>Recurrence:</strong> <code>ways(n) = ways(n−1) + ways(n−2)</code><br><strong>Base cases:</strong> <code>ways(0) = 1</code> (one way: do nothing) and <code>ways(1) = 1</code>. This is Fibonacci in disguise — the point of the problem is to show you that recognizing the recurrence <em>is</em> the solution.</div>
+<pre><code>class Solution:
+    def climbStairs(self, n: int) -&gt; int:
+        # Your code here
+        pass</code></pre>
+<details><summary>Reveal the solution after trying it yourself</summary>
+<pre><code>class Solution:
+    def climbStairs(self, n: int) -&gt; int:
+        if n &lt;= 1:
+            return 1
+        one, two = 1, 1        # ways(i-1), ways(i-2)
+        for _ in range(2, n + 1):
+            one, two = one + two, one
+        return one</code></pre>
+<p><strong>Time:</strong> <code>O(n)</code>. <strong>Space:</strong> <code>O(1)</code> — the recurrence only looks back two steps, so two variables replace the whole array. The naive recursive version is <code>O(2^n)</code>; add a memo and it drops to <code>O(n)</code>; flatten the memo into the loop and the array drops to <code>O(1)</code>. Walking through those three stages aloud is exactly what the interviewer wants to hear.</p>
+</details>
+<h3>Practice prompts</h3>
+<ol>
+<li>Why are the &quot;last move was 1 step&quot; and &quot;last move was 2 steps&quot; cases disjoint and exhaustive?</li>
+<li>What goes wrong if you solve this with plain recursion — what's the complexity and why?</li>
+<li>How would you change the recurrence if some steps are &quot;broken&quot; and cannot be landed on (<a href="https://leetcode.com/problems/min-cost-climbing-stairs/">LeetCode 746</a> is a cousin of this)?</li>
+</ol>
+<p>Try writing the solution from memory, then explain the state, recurrence, base cases, and complexity aloud as you would in an interview.</p>
+
+<footer><p><strong>Suggested workflow:</strong> solve each problem yourself first, explain your approach aloud, then compare with a clean solution. Focus on recognizing the pattern rather than memorizing code. Next in the series: <a href="index.html">Back to the index</a>.</p></footer>
+</main></body></html>
+
+
+
+

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stacks &amp; Monotonic Stacks for LeetCode — SDE Interview Study Guide</title>
+<style>
+:root{color-scheme:light;--ink:#182230;--muted:#526174;--line:#d9e1ea;--panel:#f5f8fc;--accent:#2459a9;--code:#101827}
+*{box-sizing:border-box}body{margin:0;background:#eef2f7;color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;background:#fff;padding:clamp(22px,5vw,60px);box-shadow:0 8px 35px #1d2a3a12}
+h1,h2,h3{line-height:1.25;letter-spacing:-.02em}h1{font-size:clamp(2rem,5vw,3rem);margin:.25em 0}h2{margin-top:2.1em;border-bottom:1px solid var(--line);padding-bottom:.4em}h3{margin-top:1.5em}p,li{max-width:78ch} .eyebrow{color:var(--accent);font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:.78rem}
+.lead{font-size:1.15rem;color:var(--muted)}.meta{color:var(--muted);font-size:.9rem}
+.callout{padding:16px 20px;border-left:4px solid var(--accent);background:var(--panel);border-radius:6px;margin:20px 0}
+figure{margin:24px auto;text-align:center}figure svg{width:min(100%,620px);height:auto}figcaption{font-size:.9rem;color:var(--muted);margin-top:8px}
+pre{overflow:auto;background:var(--code);color:#f3f6fb;padding:18px;border-radius:10px;line-height:1.55;font-size:.91rem}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}p code,li code,td code{background:#eef2f7;color:#24354b;padding:.1em .32em;border-radius:4px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.94rem}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--panel)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:10px;padding:16px}.card h3{margin-top:0}
+.small{font-size:.92rem;color:var(--muted)}.pill{display:inline-block;border:1px solid var(--line);padding:3px 9px;border-radius:999px;font-size:.8rem;margin:3px}
+details{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0}summary{cursor:pointer;font-weight:700}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
+@media print{body{background:white}main{box-shadow:none;max-width:none;padding:0}.card,pre,figure,table{break-inside:avoid}details{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<p class="eyebrow">Interview preparation · Python · LeetCode</p>
+<h1>Stacks &amp; Monotonic Stacks: From Fundamentals to Medium &amp; Hard</h1>
+<p class="lead">A practical, NeetCode-inspired study guide for SDE mid-level interviews. The stack is the smallest data structure in this series — and the source of some of the sharpest patterns, from matching parentheses to next-greater-element and histogram rectangles.</p>
+<p class="meta">Includes embedded diagrams, Python examples, complexity analysis, a study roadmap with direct LeetCode links, and your first practice problem. This file is self-contained and works offline. Companion guides: <a href="heaps_priority_queues_leetcode_study.html">Heaps</a> (the priority-based cousin) · <a href="graphs_leetcode_study.html">Graphs</a> (iterative DFS uses a stack).</p>
+
+<h2>1. What is a stack?</h2>
+<p>A <strong>stack</strong> is a collection where you only ever touch one end. <strong>Push</strong> adds to the top, <strong>pop</strong> removes from the top — Last-In, First-Out (LIFO). Think of a stack of plates: you put one on top, and the next one you take is the one you just put there.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 280" role="img" aria-label="Stack with 30 on top, then 12, then 5, showing push and pop at the top">
+<g font-family="system-ui,sans-serif" font-size="19" text-anchor="middle" dominant-baseline="middle">
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><rect x="210" y="170" width="140" height="44" rx="8"/><rect x="210" y="114" width="140" height="44" rx="8"/><rect x="210" y="58" width="140" height="44" rx="8"/></g>
+<g fill="#182230"><text x="280" y="192">5</text><text x="280" y="136">12</text><text x="280" y="80">30</text></g>
+<g fill="#526174" font-size="15"><text x="400" y="80">← top (push / pop here)</text><text x="280" y="262">bottom</text></g>
+<g stroke="#2459a9" stroke-width="3" fill="none"><path d="M130 80 L168 80"/><path d="M156 74 L168 80 L156 86"/><path d="M430 80 L392 80"/><path d="M404 74 L392 80 L404 86"/></g>
+<g fill="#2459a9" font-size="15"><text x="130" y="58">push</text><text x="430" y="58">pop</text></g>
+</g>
+</svg><figcaption>All action happens at the top. After <code>push(30)</code> on <code>[5, 12]</code>, the top is 30; the next <code>pop()</code> returns 30 — the most recently pushed value.</figcaption>
+</figure>
+<ul>
+<li><strong>LIFO:</strong> the last element pushed is the first popped.</li>
+<li><strong>Core ops:</strong> <code>push</code>, <code>pop</code>, <code>peek</code> (look at the top without removing), <code>is_empty</code> — all <code>O(1)</code>.</li>
+<li><strong>The mental model:</strong> a stack holds &quot;everything that is still unresolved&quot;. When a new item arrives, it either resolves the top item, or it becomes a new unresolved item itself. This framing is what makes the patterns below click.</li>
+<li><strong>It's already everywhere:</strong> your function-call <em>call stack</em> is a stack — recursion is just letting the language push and pop frames for you. Any recursive algorithm can be rewritten with an explicit stack (iterative DFS, <a href="graphs_leetcode_study.html">Graphs guide</a>).</li>
+</ul>
+
+<h2>2. Representing a stack in Python</h2>
+<p>A plain Python list is the idiomatic stack — <code>append</code> is push, <code>pop()</code> is pop:</p>
+<pre><code>stack = []
+stack.append(5)          # push — O(1) amortized
+stack.append(12)
+stack.append(30)
+
+top = stack[-1]          # peek — O(1)
+popped = stack.pop()     # pop, returns 30 — O(1)
+is_empty = len(stack) == 0</code></pre>
+<div class="callout"><strong>Performance traps:</strong> <code>list.pop(0)</code> and <code>list.insert(0, x)</code> are <code>O(n)</code> — they use the list as a <em>queue</em>, badly. If you need to add/remove at both ends, that's a <code>collections.deque</code> (<code>popleft</code>/<code>appendleft</code> are <code>O(1)</code>). See the BFS template in the <a href="graphs_leetcode_study.html">Graphs guide</a>. Python's recursion limit (~1000 frames) is the other reason to convert deep recursion to an explicit stack.</div>
+<p>Stacks of <em>pairs</em> are common — e.g. index + value for monotonic stacks:</p>
+<pre><code>stack.append((i, nums[i]))
+i, val = stack.pop()</code></pre>
+
+<h2>3. Stack vs. queue vs. heap</h2>
+<div class="grid">
+<div class="card"><h3>Stack — LIFO</h3><p>Most recent first. For matching, nesting, backtracking, &quot;the unresolved thing I saw last&quot;.</p><p class="small"><strong>Useful for:</strong> parentheses, parsing, DFS, undo, monotonic scans.</p></div>
+<div class="card"><h3>Queue — FIFO</h3><p>Oldest first. For processing in arrival order, level by level.</p><p class="small"><strong>Useful for:</strong> BFS, task scheduling. See the <a href="graphs_leetcode_study.html">Graphs guide</a>.</p></div>
+<div class="card"><h3>Heap — priority</h3><p>Most extreme first, not most recent. When &quot;next up&quot; is decided by priority rather than arrival order.</p><p class="small"><strong>Useful for:</strong> top-k, Dijkstra. See the <a href="heaps_priority_queues_leetcode_study.html">Heaps guide</a>.</p></div>
+</div>
+<table><thead><tr><th>Operation</th><th>Stack (list)</th><th>Queue (<code>deque</code>)</th><th>Heap (<code>heapq</code>)</th></tr></thead><tbody>
+<tr><td>Add</td><td><code>O(1)</code> amortized</td><td><code>O(1)</code></td><td><code>O(log n)</code></td></tr>
+<tr><td>Remove</td><td><code>O(1)</code> (top only)</td><td><code>O(1)</code> (front only)</td><td><code>O(log n)</code> (min only)</td></tr>
+<tr><td>Peek &quot;next out&quot;</td><td><code>O(1)</code> <code>stack[-1]</code></td><td><code>O(1)</code> <code>q[0]</code></td><td><code>O(1)</code> <code>heap[0]</code></td></tr>
+<tr><td>Remove arbitrary</td><td><code>O(n)</code></td><td><code>O(n)</code></td><td><code>O(n)</code> (find) + <code>O(log n)</code></td></tr>
+</tbody></table>
+<p>The decision is one question: <em>what determines who goes next?</em> Last in → stack. First in → queue. Highest priority → heap.</p>
+
+<h2>4. When should you use a stack?</h2>
+<table><thead><tr><th>Signal in the prompt</th><th>Stack play</th><th>Typical problem</th></tr></thead><tbody>
+<tr><td>Nested structure: brackets, HTML, folders</td><td>Push opens, pop-and-match closes</td><td><a href="https://leetcode.com/problems/valid-parentheses/">20</a>, <a href="https://leetcode.com/problems/simplify-path/">71</a></td></tr>
+<tr><td>Evaluate/parse an expression by precedence</td><td>Stack of pending terms/operators</td><td><a href="https://leetcode.com/problems/evaluate-reverse-polish-notation/">150</a>, <a href="https://leetcode.com/problems/basic-calculator-ii/">227</a></td></tr>
+<tr><td>&quot;Next greater/smaller/warmer…&quot;</td><td>Monotonic stack (Pattern 2)</td><td><a href="https://leetcode.com/problems/daily-temperatures/">739</a>, <a href="https://leetcode.com/problems/next-greater-element-i/">496</a></td></tr>
+<tr><td>&quot;Largest rectangle / area under a curve&quot;</td><td>Monotonic stack with indices</td><td><a href="https://leetcode.com/problems/largest-rectangle-in-histogram/">84</a>, <a href="https://leetcode.com/problems/maximal-rectangle/">85</a></td></tr>
+<tr><td>Track a running invariant (min so far, max so far)</td><td>Store extra state alongside each value</td><td><a href="https://leetcode.com/problems/min-stack/">155</a></td></tr>
+<tr><td>Convert recursion to iteration (deep input)</td><td>Explicit stack of &quot;work to do&quot;</td><td>Iterative DFS, <a href="https://leetcode.com/problems/decode-string/">394</a></td></tr>
+</tbody></table>
+
+<h2>5. Four core interview patterns</h2>
+<h3>Pattern 1 — Matching and parsing</h3>
+<p>The classic: brackets. Every closer must match the most recent unmatched opener — &quot;most recent unresolved&quot; is literally the top of a stack:</p>
+<pre><code>def is_valid(s: str) -&gt; bool:          # LeetCode 20
+    pairs = {')': '(', ']': '[', '}': '{'}
+    stack = []
+    for ch in s:
+        if ch in '([{':
+            stack.append(ch)
+        else:
+            if not stack or stack.pop() != pairs[ch]:
+                return False
+    return not stack                   # every opener must have been matched</code></pre>
+<p>The same skeleton parses file paths (<a href="https://leetcode.com/problems/simplify-path/">71</a>: push components, pop on <code>..</code>), decodes nested strings (<a href="https://leetcode.com/problems/decode-string/">394</a>: stacks for counts and partial strings), and evaluates postfix expressions (<a href="https://leetcode.com/problems/evaluate-reverse-polish-notation/">150</a>: push operands, pop two on each operator — order of the two pops matters!).</p>
+
+<h3>Pattern 2 — The monotonic stack</h3>
+<p>The highest-leverage pattern in this guide. <strong>A monotonic stack keeps its contents in sorted order by popping everything the new element makes obsolete.</strong> It answers, for each element, &quot;what is the nearest element to my left/right that is greater/smaller than me?&quot; — in <code>O(n)</code> total, not <code>O(n²)</code>.</p>
+<p><a href="https://leetcode.com/problems/daily-temperatures/">739 Daily Temperatures</a> is the cleanest example — for each day, how many days until a warmer one?</p>
+<pre><code>def daily_temperatures(temps):          # answer[i] = days until warmer
+    answer = [0] * len(temps)
+    stack = []                           # indices of days awaiting a warmer day;
+                                         # temperatures on the stack are decreasing
+    for i, t in enumerate(temps):
+        while stack and temps[stack[-1]] &lt; t:
+            j = stack.pop()              # day j finally found its warmer day: i
+            answer[j] = i - j
+        stack.append(i)
+    return answer</code></pre>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 170" role="img" aria-label="Scanning temperatures 73, 74, 75, 71, 69, 72: when 72 arrives it pops 69 and 71 from the stack and then joins it; 75 stays waiting">
+<g font-family="system-ui,sans-serif" font-size="18" text-anchor="middle" dominant-baseline="middle">
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><rect x="40" y="40" width="80" height="40" rx="8"/><rect x="130" y="40" width="80" height="40" rx="8"/><rect x="220" y="40" width="80" height="40" rx="8"/><rect x="490" y="40" width="80" height="40" rx="8"/></g>
+<g fill="#fdf3e3" stroke="#c98a2b" stroke-width="2"><rect x="310" y="40" width="80" height="40" rx="8"/><rect x="400" y="40" width="80" height="40" rx="8"/></g>
+<g fill="#182230"><text x="80" y="60">73</text><text x="170" y="60">74</text><text x="260" y="60">75</text><text x="530" y="60">72</text></g>
+<g fill="#8a5a1d"><text x="350" y="60">71</text><text x="440" y="60">69</text></g>
+<g fill="#526174" font-size="14"><text x="80" y="110">answer: 1</text><text x="170" y="110">answer: 1</text><text x="260" y="110">on stack</text><text x="350" y="110">popped: 2−? </text><text x="440" y="110">popped: 5−?</text><text x="530" y="110">pushed last</text></g>
+<g fill="#526174" font-size="14"><text x="310" y="16">arriving: 72 pops 69 and 71, then joins the stack</text></g>
+</g>
+</svg><figcaption>Scanning <code>[73, 74, 75, 71, 69, 72]</code> (indices 0–5) when 72 arrives at index 5: it pops 69 (index 4) and 71 (index 3) — their answers are <code>5 − 4 = 1</code> and <code>5 − 3 = 2</code> — then joins the stack below 75's index. Each index is pushed once and popped once, so the whole scan is <code>O(n)</code> despite the inner <code>while</code>.</figcaption>
+</figure>
+<div class="callout"><strong>The three rules of monotonic stacks:</strong> (1) <em>Next greater</em> → maintain a decreasing stack (pop when the incoming element is greater). (2) Store <strong>indices</strong>, not values — you usually need distances, and you can always look the value up. (3) The <code>while</code> loop's total work is bounded: each index enters and leaves the stack at most once, so n pushes + n pops = <code>O(n)</code>. Saying this aloud is how you justify the complexity.</div>
+<p>Escalations: circular arrays (<a href="https://leetcode.com/problems/next-greater-element-ii/">503</a> — iterate twice or <code>2n</code> with modulo), streams (<a href="https://leetcode.com/problems/online-stock-span/">901</a>), and the hard classics <a href="https://leetcode.com/problems/largest-rectangle-in-histogram/">84 Largest Rectangle in Histogram</a> and <a href="https://leetcode.com/problems/trapping-rain-water/">42 Trapping Rain Water</a> — where the stack holds candidate boundaries and each pop computes an area.</p>
+
+<h3>Pattern 3 — A stack with auxiliary state</h3>
+<p>Design problems ask for the stack plus a constant-time extra guarantee. <a href="https://leetcode.com/problems/min-stack/">155 Min Stack</a>: <code>push</code>, <code>pop</code>, <code>top</code>, <strong>and <code>getMin</code></strong> — all <code>O(1)</code>. The trick: store the running minimum <em>alongside</em> each value, so it pops together with the value that produced it:</p>
+<pre><code>class MinStack:
+    def __init__(self):
+        self.stack = []                  # each entry: (value, min_so_far)
+
+    def push(self, val: int) -&gt; None:
+        current_min = self.getMin()
+        self.stack.append((val, min(val, current_min)))
+
+    def pop(self) -&gt; None:
+        self.stack.pop()
+
+    def top(self) -&gt; int:
+        return self.stack[-1][0]
+
+    def getMin(self) -&gt; int:
+        return self.stack[-1][1] if self.stack else float('inf')</code></pre>
+<p>The general lesson: when one <code>O(1)</code> query can't be answered from the top value alone, carry a second piece of state per stack entry. The same idea powers max-stack variants and undo systems.</p>
+
+<h3>Pattern 4 — Stack as an explicit call stack</h3>
+<p>Two situations force this: recursion depth beyond Python's limit, and interleaved control flow (two nested iterations, like <a href="https://leetcode.com/problems/decode-string/">394</a> or iterator problems). The recipe: replace each recursive call with pushing a &quot;work item&quot;, and each return with a pop. Iterative tree/graph DFS from the <a href="graphs_leetcode_study.html">Graphs guide</a> is the canonical example — swap the BFS <code>deque.popleft()</code> for a stack <code>pop()</code> and you get depth-first behavior.</p>
+
+<h2>6. Study roadmap</h2>
+<table><thead><tr><th>Stage</th><th>Focus</th><th>Representative LeetCode problems</th></tr></thead><tbody>
+<tr><td>1. Foundations</td><td>Push/pop mechanics, matching</td><td><a href="https://leetcode.com/problems/valid-parentheses/">20 Valid Parentheses</a>; <a href="https://leetcode.com/problems/min-stack/">155 Min Stack</a>; <a href="https://leetcode.com/problems/implement-queue-using-stacks/">232 Queue via Stacks</a></td></tr>
+<tr><td>2. Parsing</td><td>Express state to keep between pushes</td><td><a href="https://leetcode.com/problems/simplify-path/">71 Simplify Path</a>; <a href="https://leetcode.com/problems/evaluate-reverse-polish-notation/">150 RPN</a>; <a href="https://leetcode.com/problems/decode-string/">394 Decode String</a></td></tr>
+<tr><td>3. Monotonic stack</td><td>Next-greater template</td><td><a href="https://leetcode.com/problems/next-greater-element-i/">496 Next Greater I</a>; <a href="https://leetcode.com/problems/daily-temperatures/">739 Daily Temperatures</a></td></tr>
+<tr><td>4. Monotonic variants</td><td>Circular, streaming, ranges</td><td><a href="https://leetcode.com/problems/next-greater-element-ii/">503 Next Greater II</a>; <a href="https://leetcode.com/problems/online-stock-span/">901 Stock Span</a>; <a href="https://leetcode.com/problems/sum-of-subarray-minimums/">907 Sum of Subarray Mins</a></td></tr>
+<tr><td>5. Hard classics</td><td>Areas and boundaries</td><td><a href="https://leetcode.com/problems/largest-rectangle-in-histogram/">84 Largest Rectangle</a>; <a href="https://leetcode.com/problems/trapping-rain-water/">42 Trapping Rain Water</a>; <a href="https://leetcode.com/problems/maximal-rectangle/">85 Maximal Rectangle</a></td></tr>
+<tr><td>6. Expression parsing</td><td>Precedence with stacks</td><td><a href="https://leetcode.com/problems/basic-calculator-ii/">227 Basic Calculator II</a>; <a href="https://leetcode.com/problems/basic-calculator/">224 Basic Calculator</a></td></tr>
+</tbody></table>
+
+<h2>7. Interview checklist</h2>
+<ol>
+<li><strong>Order:</strong> LIFO or FIFO? If processing order is &quot;most recent unresolved&quot;, it's a stack.</li>
+<li><strong>Contents:</strong> Values, indices, or both? Default to indices for monotonic stacks.</li>
+<li><strong>Direction:</strong> Next <em>greater</em> needs a decreasing stack; next <em>smaller</em> needs an increasing one. Write the <code>while</code> condition, then sanity-check it against a 2–3 element example.</li>
+<li><strong>Empty-stack guard:</strong> Every <code>stack[-1]</code> and <code>stack.pop()</code> needs a <code>while stack and …</code> or <code>if not stack</code> check.</li>
+<li><strong>Leftover state:</strong> What happens to items still on the stack at the end? (Unmatched brackets, indices whose warmer day never came → answer 0.)</li>
+<li><strong>Complexity:</strong> Nested <code>while</code> inside <code>for</code> is still <code>O(n)</code> if each element pushes/pops once — say why.</li>
+<li><strong>Recursion limit:</strong> Is the input large enough that recursive solutions hit Python's ~1000 frames?</li>
+<li><strong>Edge cases:</strong> Empty input, single element, all-equal elements, strictly monotonic input, sorted input.</li>
+</ol>
+
+<h2>8. First practice problem — LeetCode 20</h2>
+<p><strong><a href="https://leetcode.com/problems/valid-parentheses/">Valid Parentheses</a></strong></p>
+<p>Given a string of <code>()[]{}</code> characters, return <code>True</code> if every bracket is closed by the correct type, in the correct order, and nothing is left unmatched.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 200" role="img" aria-label="Stack trace for input ([{}]): four snapshots showing push (, push [, pop after ], pop after )">
+<g font-family="system-ui,sans-serif" font-size="17" text-anchor="middle" dominant-baseline="middle">
+<g fill="#526174" font-size="14"><text x="90" y="20">after '('</text><text x="270" y="20">after '['</text><text x="450" y="20">after ']' → pop</text><text x="450" y="185">after ')' → pop</text></g>
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><rect x="60" y="100" width="60" height="34" rx="7"/><rect x="240" y="100" width="60" height="34" rx="7"/><rect x="240" y="58" width="60" height="34" rx="7"/></g>
+<g fill="#182230"><text x="90" y="117">('</text><text x="270" y="117">('</text><text x="270" y="75">'['</text></g>
+<g fill="#c98a2b" font-size="14"><text x="90" y="160">']' matches '[' → pop</text><text x="300" y="160">then stack holds only '('</text></g>
+</g>
+<g stroke="#8ca0b8" stroke-width="2.5" fill="none"><path d="M120 117 L232 117 M300 58 L432 100"/></g>
+</svg><figcaption>Reading <code>( [ ] )</code>: openers are pushed; each closer must match the top of the stack and pops it. Valid exactly when the pop always matches and the stack ends empty.</figcaption>
+</figure>
+<p>The key realization: the correct bracket to close is always the <em>most recently opened and not yet closed</em> one — which is exactly the top of a stack.</p>
+<div class="callout"><strong>Three failure modes to cover:</strong> (1) closer arrives with an empty stack — <code>if not stack</code>; (2) top opener doesn't match — the <code>pairs</code> check; (3) openers left over at the end — <code>return not stack</code>. Missing any one passes most tests and fails the interview.</div>
+<pre><code>class Solution:
+    def isValid(self, s: str) -&gt; bool:
+        # Your code here
+        pass</code></pre>
+<details><summary>Reveal the solution after trying it yourself</summary>
+<pre><code>class Solution:
+    def isValid(self, s: str) -&gt; bool:
+        pairs = {')': '(', ']': '[', '}': '{'}
+        stack = []
+        for ch in s:
+            if ch in '([{':
+                stack.append(ch)
+            elif not stack or stack.pop() != pairs[ch]:
+                return False
+        return not stack</code></pre>
+<p><strong>Time:</strong> <code>O(n)</code> — one pass, each character pushed or popped at most once. <strong>Space:</strong> <code>O(n)</code> worst case (all openers, like <code>&quot;(((((&quot;</code>).</p>
+<p><strong>Follow-up the interviewer will ask:</strong> how would you extend this to full expression parsing with operator precedence (<a href="https://leetcode.com/problems/basic-calculator-ii/">227</a>)? The answer preview: one stack for operands and immediate evaluation of <code>*</code>/<code>/</code>, deferring <code>+</code>/<code>−</code> as signed pushes — same &quot;most recent unresolved&quot; logic, one level deeper.</p>
+</details>
+<h3>Practice prompts</h3>
+<ol>
+<li>Why must the closer match the <em>top</em> of the stack specifically, and not any element in it?</li>
+<li>What does the final <code>return not stack</code> catch that the loop alone doesn't?</li>
+<li>How would you adapt the code to also validate that brackets aren't <em>crossing</em>, like <code>&quot;([)]&quot;</code> — does your current code already handle it?</li>
+</ol>
+<p>Try writing the solution from memory, then explain the three failure modes and the complexity aloud as you would in an interview.</p>
+
+<footer><p><strong>Suggested workflow:</strong> solve each problem yourself first, explain your approach aloud, then compare with a clean solution. Focus on recognizing the pattern rather than memorizing code. Next in the series: <a href="binary_search_leetcode_study.html">Binary Search</a> · <a href="index.html">Back to the index</a>.</p></footer>
+</main></body></html>
+
+
+
+

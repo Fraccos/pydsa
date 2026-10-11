@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeetCode Study Series — Index</title>
+<style>
+:root{color-scheme:light;--ink:#182230;--muted:#526174;--line:#d9e1ea;--panel:#f5f8fc;--accent:#2459a9;--code:#101827}
+*{box-sizing:border-box}body{margin:0;background:#eef2f7;color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;background:#fff;padding:clamp(22px,5vw,60px);box-shadow:0 8px 35px #1d2a3a12}
+h1,h2,h3{line-height:1.25;letter-spacing:-.02em}h1{font-size:clamp(2rem,5vw,3rem);margin:.25em 0}h2{margin-top:2.1em;border-bottom:1px solid var(--line);padding-bottom:.4em}h3{margin-top:1.5em}p,li{max-width:78ch} .eyebrow{color:var(--accent);font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:.78rem}
+.lead{font-size:1.15rem;color:var(--muted)}.meta{color:var(--muted);font-size:.9rem}
+.callout{padding:16px 20px;border-left:4px solid var(--accent);background:var(--panel);border-radius:6px;margin:20px 0}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.94rem}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--panel)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}p code,li code,td code{background:#eef2f7;color:#24354b;padding:.1em .32em;border-radius:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:10px;padding:16px}.card h3{margin-top:0}
+.small{font-size:.92rem;color:var(--muted)}
+.done{display:flex;align-items:flex-start;gap:10px;margin:10px 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px}
+.done input{width:18px;height:18px;margin-top:4px;flex:none}
+.done label{cursor:pointer}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body><main>
+<p class="eyebrow">Interview preparation · Python · LeetCode</p>
+<h1>LeetCode Study Series</h1>
+<p class="lead">A set of self-contained, offline-friendly study guides for SDE mid-level interviews, each following the same structure: fundamentals → representations → comparisons → core patterns → roadmap → checklist → first practice problem.</p>
+<p class="meta">Progress checkboxes are saved in your browser (localStorage), so this page works offline and remembers where you left off.</p>
+
+<h2>The guides</h2>
+<div class="grid">
+<div class="card"><h3><a href="binary_trees_leetcode_study.html">Binary Trees</a></h3><p>The foundation. Recursion, DFS/BFS, the four core patterns, tree DP.</p><p class="small">Roadmap: 104 → 543 → 102 → 98 → 105 → 236 → 297</p></div>
+<div class="card"><h3><a href="linked_lists_leetcode_study.html">Linked Lists</a></h3><p>Singly and doubly, fast/slow pointers, in-place reversal, dummy nodes — up to LRU Cache (146).</p><p class="small">Roadmap: 206 → 21 → 876 → 19 → 234 → 92 → 146</p></div>
+<div class="card"><h3><a href="stacks_leetcode_study.html">Stacks &amp; Monotonic Stacks</a></h3><p>LIFO mechanics, matching and parsing, the monotonic stack (next-greater), min-stack design.</p><p class="small">Roadmap: 20 → 155 → 71 → 496 → 739 → 84</p></div>
+<div class="card"><h3><a href="binary_search_leetcode_study.html">Binary Search</a></h3><p>Templates, rotated arrays, and the big unlock: binary search on the answer for any monotonic predicate.</p><p class="small">Roadmap: 704 → 35 → 33 → 74 → 875 → 410</p></div>
+<div class="card"><h3><a href="binary_search_trees_leetcode_study.html">Binary Search Trees</a></h3><p>The deep dive the trees file skipped: invariant, search/insert/delete, inorder = sorted, validation bounds, LCA descent.</p><p class="small">Roadmap: 700 → 230 → 98 → 235 → 108 → 173</p></div>
+<div class="card"><h3><a href="heaps_priority_queues_leetcode_study.html">Heaps &amp; Priority Queues</a></h3><p><code>heapq</code> idioms, insertion/heapify costs, the top-k pattern, k-way merge, and the two-heap median trick.</p><p class="small">Roadmap: 703 → 215 → 1046 → 23 → 621 → 295</p></div>
+<div class="card"><h3><a href="graphs_leetcode_study.html">Graphs</a></h3><p>Adjacency lists, BFS vs. DFS, grids-as-graphs, topological sort, Union-Find and Dijkstra recognition.</p><p class="small">Roadmap: 1971 → 200 → 994 → 207 → 684 → 743 → 127</p></div>
+<div class="card"><h3><a href="dynamic_programming_leetcode_study.html">Dynamic Programming</a></h3><p>Overlapping subproblems, memoization vs. tabulation, and the four patterns: linear, grid, knapsack, two-sequence.</p><p class="small">Roadmap: 70 → 198 → 62 → 322 → 300 → 1143</p></div>
+</div>
+
+<h2>The dependency tree</h2>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 340" role="img" aria-label="Study dependency tree: Binary Trees, Linked Lists, Stacks and Binary Search are foundations; BST and Heaps depend on Binary Trees; Graphs depends on Binary Trees and Heaps; Dynamic Programming depends on Graphs">
+<g stroke="#8ca0b8" stroke-width="2.5" fill="none">
+<path d="M150 72 L120 148 M150 72 L280 148 M190 72 L455 148 M325 172 L435 172 M480 194 L440 270"/>
+</g>
+<g font-family="system-ui,sans-serif" font-size="17" text-anchor="middle" dominant-baseline="middle">
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><rect x="75" y="28" width="150" height="44" rx="10"/><rect x="325" y="28" width="130" height="44" rx="10"/><rect x="515" y="28" width="80" height="44" rx="10"/><rect x="665" y="28" width="150" height="44" rx="10"/><rect x="75" y="150" width="90" height="44" rx="10"/><rect x="235" y="150" width="90" height="44" rx="10"/><rect x="435" y="150" width="90" height="44" rx="10"/></g>
+<g fill="#fdf3e3" stroke="#c98a2b" stroke-width="2"><rect x="330" y="272" width="200" height="44" rx="10"/></g>
+<g fill="#182230"><text x="150" y="50">Binary Trees</text><text x="390" y="50">Linked Lists</text><text x="555" y="50">Stacks</text><text x="740" y="50">Binary Search</text><text x="120" y="172">BST</text><text x="280" y="172">Heaps</text><text x="480" y="172">Graphs</text></g>
+<g fill="#8a5a1d"><text x="430" y="294">Dynamic Programming</text></g>
+</g>
+</svg>
+<figcaption>Top row = foundations, any order (though Binary Trees first is never wasted — everything downstream reuses its recursion). Links show what each guide assumes: BST needs Trees, Heaps needs Trees, Graphs needs Trees + Heaps, and Dynamic Programming — the summit — needs Graphs and recursion fluency. The flat linear order that follows this tree: <strong>Trees → Linked Lists → Stacks → Binary Search → BST → Heaps → Graphs → DP</strong>.</figcaption>
+</figure>
+
+<h2>Suggested order</h2>
+<table><thead><tr><th>#</th><th>Guide</th><th>Why this order</th><th>Depends on</th></tr></thead><tbody>
+<tr><td>1</td><td>Binary Trees</td><td>Recursion, DFS/BFS and the return-value mindset carry into everything else</td><td>—</td></tr>
+<tr><td>2</td><td>Linked Lists</td><td>Pointer manipulation and two-pointer technique; no prerequisites, builds confidence fast</td><td>—</td></tr>
+<tr><td>3</td><td>Stacks &amp; Monotonic Stacks</td><td>Small structure, big patterns; the monotonic stack recurs in hard problems everywhere</td><td>—</td></tr>
+<tr><td>4</td><td>Binary Search</td><td>Templates plus search-on-answer; powers greedy feasibility checks used later</td><td>—</td></tr>
+<tr><td>5</td><td>Binary Search Trees</td><td>Same tree mechanics plus the ordering rule; also &quot;binary search as a data structure&quot;</td><td>Trees, Binary Search</td></tr>
+<tr><td>6</td><td>Heaps &amp; Priority Queues</td><td><code>heapq</code> fluency pays off immediately in graph problems</td><td>Trees</td></tr>
+<tr><td>7</td><td>Graphs</td><td>Reuses BFS/DFS; Dijkstra assumes you know heaps</td><td>Trees, Heaps</td></tr>
+<tr><td>8</td><td>Dynamic Programming</td><td>Recursion from Trees plus thinking in states; hardest topic, so it comes last</td><td>Trees, Graphs</td></tr>
+</tbody></table>
+
+<h2>Progress</h2>
+<div class="done"><input type="checkbox" id="p1" data-key="trees"><label for="p1"><strong>Binary Trees</strong> — finished the guide and solved 104 from memory</label></div>
+<div class="done"><input type="checkbox" id="p2" data-key="linked-lists"><label for="p2"><strong>Linked Lists</strong> — finished the guide and solved 206 from memory</label></div>
+<div class="done"><input type="checkbox" id="p3" data-key="stacks"><label for="p3"><strong>Stacks &amp; Monotonic Stacks</strong> — finished the guide and solved 20 from memory</label></div>
+<div class="done"><input type="checkbox" id="p4" data-key="binary-search"><label for="p4"><strong>Binary Search</strong> — finished the guide and solved 704 from memory</label></div>
+<div class="done"><input type="checkbox" id="p5" data-key="bst"><label for="p5"><strong>Binary Search Trees</strong> — finished the guide and solved 230 from memory</label></div>
+<div class="done"><input type="checkbox" id="p6" data-key="heaps"><label for="p6"><strong>Heaps &amp; Priority Queues</strong> — finished the guide and solved 215 from memory</label></div>
+<div class="done"><input type="checkbox" id="p7" data-key="graphs"><label for="p7"><strong>Graphs</strong> — finished the guide and solved 200 from memory</label></div>
+<div class="done"><input type="checkbox" id="p8" data-key="dp"><label for="p8"><strong>Dynamic Programming</strong> — finished the guide and solved 70 from memory</label></div>
+
+<h2>Planned expansions</h2>
+<p class="small">Future guides in the same format, following the NeetCode roadmap: Tries (208, 211, 212), Backtracking (39, 40, 78, 90), and Arrays &amp; Hashing (217, 242, 1, 49, 238). Suggested pairs: Tries after BSTs; Backtracking after DP (the recursion trees are the same); Arrays &amp; Hashing first, as the true foundation.</p>
+
+<div class="callout"><strong>Every guide ends the same way:</strong> solve the practice problem yourself first, explain the base case, invariant, and complexity aloud, then compare with the revealed solution. Pattern recognition over memorization.</div>
+
+<footer><p>All guides are plain HTML files — open any of them directly from disk, print them, or read them on a plane. No network required.</p></footer>
+</main>
+<script>
+document.querySelectorAll('input[data-key]').forEach(function (box) {
+  var key = 'leetcode-study-' + box.dataset.key;
+  box.checked = localStorage.getItem(key) === '1';
+  box.addEventListener('change', function () {
+    localStorage.setItem(key, box.checked ? '1' : '0');
+  });
+});
+</script>
+</body></html>
+
+
+
+

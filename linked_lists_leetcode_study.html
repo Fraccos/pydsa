@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linked Lists for LeetCode — SDE Interview Study Guide</title>
+<style>
+:root{color-scheme:light;--ink:#182230;--muted:#526174;--line:#d9e1ea;--panel:#f5f8fc;--accent:#2459a9;--code:#101827}
+*{box-sizing:border-box}body{margin:0;background:#eef2f7;color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;background:#fff;padding:clamp(22px,5vw,60px);box-shadow:0 8px 35px #1d2a3a12}
+h1,h2,h3{line-height:1.25;letter-spacing:-.02em}h1{font-size:clamp(2rem,5vw,3rem);margin:.25em 0}h2{margin-top:2.1em;border-bottom:1px solid var(--line);padding-bottom:.4em}h3{margin-top:1.5em}p,li{max-width:78ch} .eyebrow{color:var(--accent);font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:.78rem}
+.lead{font-size:1.15rem;color:var(--muted)}.meta{color:var(--muted);font-size:.9rem}
+.callout{padding:16px 20px;border-left:4px solid var(--accent);background:var(--panel);border-radius:6px;margin:20px 0}
+figure{margin:24px auto;text-align:center}figure svg{width:min(100%,620px);height:auto}figcaption{font-size:.9rem;color:var(--muted);margin-top:8px}
+pre{overflow:auto;background:var(--code);color:#f3f6fb;padding:18px;border-radius:10px;line-height:1.55;font-size:.91rem}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}p code,li code,td code{background:#eef2f7;color:#24354b;padding:.1em .32em;border-radius:4px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.94rem}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--panel)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:10px;padding:16px}.card h3{margin-top:0}
+.small{font-size:.92rem;color:var(--muted)}.pill{display:inline-block;border:1px solid var(--line);padding:3px 9px;border-radius:999px;font-size:.8rem;margin:3px}
+details{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0}summary{cursor:pointer;font-weight:700}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
+@media print{body{background:white}main{box-shadow:none;max-width:none;padding:0}.card,pre,figure,table{break-inside:avoid}details{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<p class="eyebrow">Interview preparation · Python · LeetCode</p>
+<h1>Linked Lists: From Fundamentals to LRU Cache</h1>
+<p class="lead">A practical, NeetCode-inspired study guide for SDE mid-level interviews. Singly and doubly linked lists, the pointer-surgery patterns, and the design problems — up to and including LRU Cache.</p>
+<p class="meta">Includes embedded diagrams, Python examples, complexity analysis, a study roadmap with direct LeetCode links, and your first practice problem. This file is self-contained and works offline.</p>
+
+<h2>1. What is a linked list?</h2>
+<p>A <strong>linked list</strong> is a sequence of <strong>nodes</strong>, where each node stores a value and a reference (<code>next</code>) to the following node. Unlike an array, nodes are not contiguous in memory — the links <em>are</em> the order.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 120" role="img" aria-label="Singly linked list 4, 8, 15 ending in null, with head label above the first node">
+<g font-family="system-ui,sans-serif" font-size="19" text-anchor="middle" dominant-baseline="middle">
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><rect x="80" y="40" width="100" height="46" rx="10"/><rect x="240" y="40" width="100" height="46" rx="10"/><rect x="400" y="40" width="100" height="46" rx="10"/></g>
+<g fill="#182230"><text x="130" y="63">4</text><text x="290" y="63">8</text><text x="450" y="63">15</text></g>
+<g stroke="#8ca0b8" stroke-width="3" fill="none"><path d="M180 63 L232 63 M340 63 L392 63 M500 63 L540 63"/></g>
+<g fill="#526174"><text x="565" y="63">∅</text><text x="130" y="18">head</text></g>
+</g>
+<path d="M130 24 L130 34" stroke="#526174" stroke-width="2"/>
+<path d="M530 58 L544 63 L530 68" stroke="#8ca0b8" stroke-width="3" fill="none"/>
+</svg><figcaption>A singly linked list <code>4 → 8 → 15 → ∅</code>. You only hold a reference to the head — everything else is reached by walking <code>next</code>.</figcaption>
+</figure>
+<ul>
+<li><strong>Head / tail:</strong> the first and last nodes. The tail's <code>next</code> is <code>None</code>.</li>
+<li><strong>Singly linked:</strong> each node points only <em>forward</em>. You can never go back.</li>
+<li><strong>Doubly linked:</strong> each node also stores <code>prev</code>, so you can walk both directions and delete a node in <code>O(1)</code> given the node itself.</li>
+<li><strong>Circular:</strong> the tail points back to the head (or anywhere — that's a cycle, the bug most cycle problems are about).</li>
+<li><strong>Sentinel / dummy node:</strong> a fake node placed before the head so that &quot;the node before the one I'm deleting&quot; always exists — even when that node is the head. The single most useful trick in this topic.</li>
+</ul>
+
+<h2>2. Representing a linked list in Python</h2>
+<pre><code>class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+class DoublyListNode:
+    def __init__(self, val=0, prev=None, next=None):
+        self.val = val
+        self.prev = prev
+        self.next = next</code></pre>
+<p>Build and walk a list manually:</p>
+<pre><code>head = ListNode(4, ListNode(8, ListNode(15)))
+
+node = head
+while node:
+    print(node.val)      # 4, 8, 15
+    node = node.next</code></pre>
+<p>Doubly linked lists are rarely handed to you by LeetCode — you build them yourself in design problems. The canonical example is LRU Cache (146): a hash map from key → node, plus a doubly linked list in recency order, so both lookup <em>and</em> reordering are <code>O(1)</code>. Python's <code>collections.OrderedDict</code> implements exactly this machinery (its <code>move_to_end</code> is the built-in version of the pointer surgery below) — mention it, but implement the manual version if asked.</p>
+
+<h2>3. Linked list vs. dynamic array vs. deque</h2>
+<p>Python's <code>list</code> is a <em>dynamic array</em>, not a linked list. Know the trade-offs precisely — this is a common interview question:</p>
+<table><thead><tr><th>Operation</th><th>Linked list</th><th>Python <code>list</code> (dynamic array)</th><th><code>collections.deque</code></th></tr></thead><tbody>
+<tr><td>Access i-th element</td><td><code>O(n)</code> — walk from head</td><td><code>O(1)</code></td><td><code>O(n)</code></td></tr>
+<tr><td>Insert/delete at front</td><td><code>O(1)</code></td><td><code>O(n)</code> — shifts everything</td><td><code>O(1)</code></td></tr>
+<tr><td>Insert/delete at back</td><td><code>O(1)</code> with a tail pointer</td><td><code>O(1)</code> amortized (<code>append</code>)</td><td><code>O(1)</code></td></tr>
+<tr><td>Insert/delete at a <em>known node</em></td><td><code>O(1)</code> (doubly, after unlinking)</td><td><code>O(n)</code></td><td>n/a (no node handles)</td></tr>
+<tr><td>Memory per element</td><td>Higher (pointer per node, poor locality)</td><td>Low (contiguous)</td><td>Lowish</td></tr>
+</tbody></table>
+<div class="callout"><strong>The real takeaway:</strong> linked lists trade random access for cheap structural edits. In practice Python code almost always wins with a <code>list</code> or <code>deque</code> because of cache locality — but in <em>interviews</em>, linked lists are a playground for pointer manipulation, in-place operations, and two-pointer technique, which is what these problems actually test.</div>
+
+<h2>4. When should you reach for linked-list technique?</h2>
+<table><thead><tr><th>Signal in the prompt</th><th>Tool</th><th>Typical problem</th></tr></thead><tbody>
+<tr><td>&quot;Middle of the list&quot;, &quot;detect a cycle&quot;</td><td>Fast &amp; slow pointers</td><td>876, 141, 142</td></tr>
+<tr><td>&quot;Reverse…&quot;, &quot;in place, O(1) space&quot;</td><td>Pointer surgery (Pattern 3)</td><td>206, 92, 25</td></tr>
+<tr><td>Head may change (deletion, merge, insert)</td><td>Dummy/sentinel node</td><td>203, 21, 19</td></tr>
+<tr><td>&quot;Design a structure with O(1) ops&quot; keyed by usage</td><td>Doubly linked list + hash map</td><td>146 LRU Cache, 460 LFU Cache</td></tr>
+<tr><td>Digits/numbers stored in lists</td><td>Walk both lists, carry handling</td><td>2 Add Two Numbers, 445</td></tr>
+<tr><td>Merge or interleave two lists</td><td>Two pointers + dummy head</td><td>21, 23, 160</td></tr>
+</tbody></table>
+
+<h2>5. Four core interview patterns</h2>
+<h3>Pattern 1 — The dummy (sentinel) node</h3>
+<p>Whenever the head itself might be removed or replaced, prepend a dummy node and return <code>dummy.next</code> at the end. It deletes a whole category of <code>if head is None</code> special cases:</p>
+<pre><code>def merge_two_lists(l1, l2):        # LeetCode 21
+    dummy = tail = ListNode()
+    while l1 and l2:
+        if l1.val &lt;= l2.val:
+            tail.next, l1 = l1, l1.next
+        else:
+            tail.next, l2 = l2, l2.next
+        tail = tail.next
+    tail.next = l1 if l1 else l2    # attach the leftover
+    return dummy.next</code></pre>
+<p>Common problems: <a href="https://leetcode.com/problems/merge-two-sorted-lists/">21 Merge Two Sorted Lists</a>, <a href="https://leetcode.com/problems/remove-linked-list-elements/">203 Remove Linked List Elements</a>, <a href="https://leetcode.com/problems/remove-nth-node-from-end-of-list/">19 Remove Nth Node From End</a>.</p>
+
+<h3>Pattern 2 — Fast &amp; slow pointers (Floyd's tortoise and hare)</h3>
+<p>Two pointers moving at different speeds turn &quot;walk the list twice&quot; into &quot;walk it once&quot;, and detect cycles without extra memory:</p>
+<pre><code>def has_cycle(head):                # LeetCode 141
+    slow = fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+        if slow is fast:
+            return True
+    return False</code></pre>
+<p>The same setup finds the <strong>middle</strong> (stop when <code>fast</code> hits the end; slow is there), and — the elegant part — the <strong>cycle entry point</strong>: after they meet, move one pointer to the head and advance both one step at a time; they meet at the cycle's start (<a href="https://leetcode.com/problems/linked-list-cycle-ii/">142</a>). Common problems: <a href="https://leetcode.com/problems/middle-of-the-linked-list/">876 Middle</a>, <a href="https://leetcode.com/problems/linked-list-cycle/">141 Cycle</a>, <a href="https://leetcode.com/problems/palindrome-linked-list/">234 Palindrome</a> (find middle, reverse second half, compare).</p>
+
+<h3>Pattern 3 — In-place reversal (pointer surgery)</h3>
+<p>Reversing a list is three variables and one loop — and it's the building block for a surprising number of problems:</p>
+<pre><code>def reverse_list(head):             # LeetCode 206
+    prev = None
+    curr = head
+    while curr:
+        nxt = curr.next             # 1. save the rest
+        curr.next = prev            # 2. flip this node's pointer
+        prev = curr                 # 3. step both pointers forward
+        curr = nxt
+    return prev                     # prev is the new head</code></pre>
+<p>Every node's <code>next</code> is rewritten exactly once: <code>O(n)</code> time, <code>O(1)</code> space. Variants: reverse a subrange (<a href="https://leetcode.com/problems/reverse-linked-list-ii/">92</a>), reverse in groups of k (<a href="https://leetcode.com/problems/reverse-nodes-in-k-group/">25</a>), reorder by alternating front and back (<a href="https://leetcode.com/problems/reorder-list/">143</a> — find middle, reverse second half, merge).</p>
+
+<h3>Pattern 4 — Doubly linked list + hash map: LRU Cache</h3>
+<p><a href="https://leetcode.com/problems/lru-cache/">146 LRU Cache</a> is the flagship design problem. The requirements: <code>get</code> and <code>put</code> in <code>O(1)</code>. Neither structure alone suffices — a hash map can't order by recency, and a list can't find keys. Together they can:</p>
+<ul>
+<li><strong>Hash map:</strong> key → node, for <code>O(1)</code> lookup.</li>
+<li><strong>Doubly linked list:</strong> nodes in recency order, most-recent at the front. Doubly is essential: you must unlink a node you reach <em>through the map</em>, i.e., without walking to it.</li>
+</ul>
+<pre><code>class Node:
+    def __init__(self, key=0, val=0):
+        self.key, self.val = key, val
+        self.prev = self.next = None
+
+class LRUCache:
+    def __init__(self, capacity: int):
+        self.cap = capacity
+        self.map = {}                       # key -> Node
+        self.head = Node()                  # sentinel: most recent side
+        self.tail = Node()                  # sentinel: least recent side
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    def _remove(self, node):
+        node.prev.next = node.next
+        node.next.prev = node.prev
+
+    def _add_front(self, node):             # insert right after head
+        node.next = self.head.next
+        node.prev = self.head
+        self.head.next.prev = node
+        self.head.next = node
+
+    def get(self, key: int) -&gt; int:
+        if key not in self.map:
+            return -1
+        node = self.map[key]
+        self._remove(node)                  # mark as most recently used
+        self._add_front(node)
+        return node.val
+
+    def put(self, key: int, value: int) -&gt; None:
+        if key in self.map:
+            self._remove(self.map[key])
+        node = Node(key, value)
+        self.map[key] = node
+        self._add_front(node)
+        if len(self.map) &gt; self.cap:
+            lru = self.tail.prev            # evict the least recently used
+            self._remove(lru)
+            del self.map[lru.key]</code></pre>
+<div class="callout"><strong>Why the two sentinels matter:</strong> with head and tail dummies, <code>_remove</code> and <code>_add_front</code> never need a null check — even when evicting the very last real node. This is the same sentinel trick from Pattern 1, now load-bearing.</div>
+<p>Interview follow-ups to expect: why not a singly linked list (couldn't unlink without the predecessor), why not an array (<code>O(n)</code> reorder), what breaks with equal priorities (nothing — that's LFU's job, <a href="https://leetcode.com/problems/lfu-cache/">460</a>), and thread-safety (wrap ops in a lock — good to mention).</p>
+
+<h2>6. Study roadmap</h2>
+<table><thead><tr><th>Stage</th><th>Focus</th><th>Representative LeetCode problems</th></tr></thead><tbody>
+<tr><td>1. Foundations</td><td>Walk, dummy nodes, basic surgery</td><td><a href="https://leetcode.com/problems/reverse-linked-list/">206 Reverse Linked List</a>; <a href="https://leetcode.com/problems/merge-two-sorted-lists/">21 Merge Two Sorted Lists</a>; <a href="https://leetcode.com/problems/remove-linked-list-elements/">203 Remove Elements</a></td></tr>
+<tr><td>2. Two pointers</td><td>Fast/slow, distances</td><td><a href="https://leetcode.com/problems/middle-of-the-linked-list/">876 Middle</a>; <a href="https://leetcode.com/problems/linked-list-cycle/">141 Cycle</a>; <a href="https://leetcode.com/problems/remove-nth-node-from-end-of-list/">19 Remove Nth From End</a></td></tr>
+<tr><td>3. Combining tricks</td><td>Reverse + merge + walk</td><td><a href="https://leetcode.com/problems/palindrome-linked-list/">234 Palindrome</a>; <a href="https://leetcode.com/problems/reorder-list/">143 Reorder List</a>; <a href="https://leetcode.com/problems/linked-list-cycle-ii/">142 Cycle II</a></td></tr>
+<tr><td>4. Values in lists</td><td>Carry arithmetic, interleaving</td><td><a href="https://leetcode.com/problems/add-two-numbers/">2 Add Two Numbers</a>; <a href="https://leetcode.com/problems/copy-list-with-random-pointer/">138 Copy With Random Pointer</a>; <a href="https://leetcode.com/problems/intersection-of-two-linked-lists/">160 Intersection</a></td></tr>
+<tr><td>5. Advanced reversal</td><td>Subranges, groups of k</td><td><a href="https://leetcode.com/problems/reverse-linked-list-ii/">92 Reverse II</a>; <a href="https://leetcode.com/problems/reverse-nodes-in-k-group/">25 Reverse k-Group</a></td></tr>
+<tr><td>6. Design</td><td>Hash map + doubly linked list</td><td><a href="https://leetcode.com/problems/lru-cache/">146 LRU Cache</a>; <a href="https://leetcode.com/problems/lfu-cache/">460 LFU Cache</a>; <a href="https://leetcode.com/problems/design-linked-list/">707 Design Linked List</a></td></tr>
+</tbody></table>
+
+<h2>7. Interview checklist</h2>
+<ol>
+<li><strong>Empty list:</strong> Does <code>head is None</code> work? Does <code>head.next</code> explode?</li>
+<li><strong>Head changes:</strong> Can the operation remove or replace the head? Use a dummy node.</li>
+<li><strong>Single node:</strong> Every loop with <code>fast.next.next</code> needs <code>fast and fast.next</code> first.</li>
+<li><strong>Return value:</strong> The original head is often stale after surgery — return the new head (<code>prev</code> or <code>dummy.next</code>).</li>
+<li><strong>Reference vs. copy:</strong> Assigning <code>node.next</code> mutates the list; saved <code>nxt</code> pointers exist because reassignment destroys the old link.</li>
+<li><strong>Cycle safety:</strong> Am I walking a list that might be cyclic without Floyd's?</li>
+<li><strong>Complexity:</strong> O(n) time, O(1) space is the bar — recursion costs O(n) stack, which the interviewer may reject.</li>
+<li><strong>Doubly links:</strong> For every <code>prev</code> update, is there a matching <code>next</code> update?</li>
+</ol>
+
+<h2>8. First practice problem — LeetCode 206</h2>
+<p><strong><a href="https://leetcode.com/problems/reverse-linked-list/">Reverse Linked List</a></strong></p>
+<p>Given the head of a singly linked list, reverse the list and return the new head. Do it iteratively with <code>O(1)</code> space.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 240" role="img" aria-label="Reversal before and after: 1,2,3 pointing right becomes 3,2,1 pointing left">
+<g font-family="system-ui,sans-serif" font-size="19" text-anchor="middle" dominant-baseline="middle">
+<g fill="#526174" font-size="15"><text x="80" y="35">before</text><text x="80" y="150">after</text></g>
+<g fill="#e8f0ff" stroke="#2459a9" stroke-width="2"><rect x="150" y="18" width="80" height="40" rx="9"/><rect x="290" y="18" width="80" height="40" rx="9"/><rect x="430" y="18" width="80" height="40" rx="9"/><rect x="150" y="133" width="80" height="40" rx="9"/><rect x="290" y="133" width="80" height="40" rx="9"/><rect x="430" y="133" width="80" height="40" rx="9"/></g>
+<g fill="#182230"><text x="190" y="38">1</text><text x="330" y="38">2</text><text x="470" y="38">3</text><text x="190" y="153">3</text><text x="330" y="153">2</text><text x="470" y="153">1</text></g>
+<g stroke="#8ca0b8" stroke-width="3" fill="none"><path d="M230 38 L282 38 M370 38 L422 38 M510 38 L545 38"/><path d="M282 38 L268 33 M282 38 L268 43 M422 38 L408 33 M422 38 L408 43 M532 33 L546 38 L532 43"/><path d="M230 153 L282 153 M370 153 L422 153 M510 153 L545 153"/><path d="M282 153 L268 148 M282 153 L268 158 M422 153 L408 148 M422 153 L408 158 M532 148 L546 153 L532 158"/></g>
+<g fill="#526174"><text x="575" y="38">∅</text><text x="575" y="153">∅</text></g>
+<g fill="#526174" font-size="15"><text x="190" y="115">head</text></g>
+</g>
+<path d="M190 122 L190 131" stroke="#526174" stroke-width="2"/>
+</svg><figcaption>Same nodes, reversed links. Top: <code>1 → 2 → 3 → ∅</code>, head at 1. Bottom: <code>3 → 2 → 1 → ∅</code>, new head at 3. Every <code>next</code> pointer flips direction exactly once.</figcaption>
+</figure>
+<p>Walk the list once, flipping each node's <code>next</code> to point backwards. The trap: flip the pointer before saving the rest of the list and you've cut yourself off — hence the three-step dance in Pattern 3.</p>
+<div class="callout"><strong>Invariant:</strong> after processing node <code>curr</code>, everything from <code>prev</code> backwards is fully reversed, and <code>curr</code> still leads to the untouched remainder. When <code>curr</code> is <code>None</code>, <code>prev</code> is the new head.</div>
+<pre><code># Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+
+class Solution:
+    def reverseList(self, head: Optional[ListNode]) -&gt; Optional[ListNode]:
+        # Your code here
+        pass</code></pre>
+<details><summary>Reveal the solution after trying it yourself</summary>
+<pre><code>class Solution:
+    def reverseList(self, head: Optional[ListNode]) -&gt; Optional[ListNode]:
+        prev = None
+        curr = head
+        while curr:
+            nxt = curr.next
+            curr.next = prev
+            prev = curr
+            curr = nxt
+        return prev</code></pre>
+<p><strong>Time:</strong> <code>O(n)</code> — one pass, one pointer rewrite per node. <strong>Space:</strong> <code>O(1)</code>. The recursive version is also <code>O(n)</code> time but <code>O(n)</code> stack — say that trade-off out loud before the interviewer asks.</p>
+</details>
+<h3>Practice prompts</h3>
+<ol>
+<li>Why is the line <code>nxt = curr.next</code> necessary — what breaks without it?</li>
+<li>Why does the function return <code>prev</code> and not <code>head</code>?</li>
+<li>How would you reverse only the last k nodes of the list, reusing this code?</li>
+</ol>
+<p>Try writing the solution from memory, then explain the three pointer variables and the loop invariant aloud as you would in an interview.</p>
+
+<footer><p><strong>Suggested workflow:</strong> solve each problem yourself first, explain your approach aloud, then compare with a clean solution. Focus on recognizing the pattern rather than memorizing code. Next in the series: <a href="stacks_leetcode_study.html">Stacks &amp; Monotonic Stacks</a> · <a href="index.html">Back to the index</a>.</p></footer>
+</main></body></html>
+
+
+
+
